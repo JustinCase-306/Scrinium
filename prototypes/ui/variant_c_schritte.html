@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Scrinium — Prototyp C · Schritte</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  /* Heller, ruhiger Stil: hoher Kontrast, klare Raster, keine Farbflaechen */
+  :root {
+    --bg:       #FBFAF7;
+    --card:     #FFFFFF;
+    --ink:      #1A1D21;
+    --ink-2:    #4A5058;
+    --ink-3:    #757C85;
+    --line:     #DFE1E4;
+    --line-2:   #ECEEF0;
+    --brand:    #1D4ED8;
+    --brand-ink:#1E3A8A;
+    --ok:       #15803D;
+
+    --r: 10px;
+    --r-lg: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+
+  body {
+    font-family: Inter, "Segoe UI", system-ui, sans-serif;
+    background: #EDEBE6;
+    color: var(--ink);
+    overflow: hidden;
+    font-size: 18px;                 /* noch etwas groesser */
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .sym { font-family: "Material Symbols Rounded"; font-weight: normal; font-style: normal;
+         font-size: 24px; line-height: 1; display: inline-block; white-space: nowrap;
+         letter-spacing: normal; text-transform: none; -webkit-font-feature-settings: 'liga'; }
+
+  .win { width: 1120px; height: 760px; background: var(--bg); display: flex; flex-direction: column; }
+
+  /* ── Kopf ─────────────────────────────────────────────────── */
+  .head {
+    padding: 22px 34px;
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 14px;
+    background: var(--card);
+  }
+  .logo {
+    width: 44px; height: 44px; border-radius: var(--r);
+    background: var(--brand); color: #fff;
+    display: grid; place-items: center;
+  }
+  .logo .sym { font-size: 26px; }
+  .name { font-size: 22px; font-weight: 650; letter-spacing: -0.3px; }
+  .tag { font-size: 15px; color: var(--ink-3); margin-left: 10px; padding-left: 14px;
+         border-left: 1px solid var(--line); }
+  .spacer { flex: 1; }
+  .link {
+    min-height: 48px; padding: 0 16px; border-radius: var(--r);
+    border: 1px solid var(--line); background: var(--card); color: var(--ink-2);
+    font-family: inherit; font-size: 15.5px; font-weight: 500;
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+  }
+  .link:hover { background: var(--line-2); }
+
+  /* ── Inhalt ───────────────────────────────────────────────── */
+  .body { flex: 1; display: flex; min-height: 0; }
+
+  /* Werkzeugwahl: schmale Leiste, nur Symbole + Name */
+  .side {
+    width: 240px; flex-shrink: 0;
+    background: var(--card);
+    border-right: 1px solid var(--line);
+    padding: 18px 12px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .side-lbl { font-size: 14px; font-weight: 700; color: var(--ink-3);
+              text-transform: uppercase; letter-spacing: .9px; padding: 0 10px 10px; }
+  .tool {
+    display: flex; align-items: center; gap: 12px;
+    padding: 13px 12px; min-height: 56px;
+    border: none; background: transparent; border-radius: var(--r);
+    cursor: pointer; text-align: left; font-family: inherit; font-size: 16.5px;
+    color: var(--ink-2); width: 100%;
+  }
+  .tool .sym { font-size: 25px; color: var(--ink-3); }
+  .tool.on { background: #EEF2FF; color: var(--brand-ink); font-weight: 600; }
+  .tool.on .sym { color: var(--brand); }
+  .tool.off { opacity: .45; }
+  .tool-dot { margin-left: auto; width: 9px; height: 9px; border-radius: 50%; background: var(--ok); }
+  .tool-dot.off { background: var(--line); }
+
+  /* ── Arbeitsflaeche ────────────────────────────────────────── */
+  .work { flex: 1; padding: 40px 44px; overflow-y: auto; min-width: 0; }
+
+  .w-title { font-size: 32px; font-weight: 650; letter-spacing: -0.6px; }
+  .w-sub { font-size: 17px; color: var(--ink-2); margin-top: 8px; max-width: 640px; }
+
+  /* Schritt 1: Ordner */
+  .step { margin-top: 34px; }
+  .step-h { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .step-n {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    display: grid; place-items: center;
+    font-size: 15px; font-weight: 700; flex-shrink: 0;
+  }
+  .step-t { font-size: 18px; font-weight: 650; }
+
+  .row {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--r-lg); padding: 16px 20px; min-height: 74px;
+  }
+  .row .sym { color: var(--ink-3); font-size: 26px; }
+  .row-txt { min-width: 0; flex: 1; }
+  .row-lbl { font-size: 14px; color: var(--ink-3); }
+  .row-val { font-size: 17px; font-weight: 550; margin-top: 2px;
+             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .btn-sec {
+    min-height: 56px; padding: 0 20px;
+    border: 1px solid var(--line); border-radius: var(--r);
+    background: var(--card); color: var(--ink);
+    font-family: inherit; font-size: 16px; font-weight: 550;
+    display: flex; align-items: center; gap: 9px; cursor: pointer; flex-shrink: 0;
+  }
+  .btn-sec:hover { background: var(--line-2); }
+
+  /* Schritt 2: was passiert */
+  .list { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }
+  .li {
+    display: flex; align-items: center; gap: 14px;
+    padding: 15px 20px; min-height: 64px;
+    border-bottom: 1px solid var(--line-2);
+  }
+  .li:last-child { border-bottom: none; }
+  .ft {
+    width: 40px; height: 40px; border-radius: 9px; flex-shrink: 0;
+    display: grid; place-items: center;
+    font-size: 14px; font-weight: 750; letter-spacing: .2px; color: #fff;
+  }
+  .li-n { font-size: 16.5px; font-weight: 500; flex: 1; min-width: 0;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .li-to { font-size: 15px; color: var(--ink-3); white-space: nowrap; }
+  .li-sz { font-size: 14.5px; color: var(--ink-3); width: 90px; text-align: right; }
+
+  /* Ergebniszeile */
+  .ok-strip {
+    margin-top: 14px; padding: 16px 20px;
+    background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: var(--r-lg);
+    display: flex; align-items: center; gap: 14px;
+  }
+  .ok-strip .sym { color: var(--ok); }
+  .ok-t { font-size: 17px; font-weight: 650; color: var(--ok); }
+  .ok-s { font-size: 14.5px; color: var(--ink-2); margin-top: 2px; }
+  .ok-strip .btn-sec { margin-left: auto; min-height: 48px; }
+
+  /* Der Aufruf */
+  .cta {
+    margin-top: 30px; width: 100%; min-height: 92px;
+    border: none; border-radius: var(--r-lg);
+    background: var(--brand); color: #fff;
+    font-family: inherit; font-size: 22px; font-weight: 650;
+    display: flex; align-items: center; justify-content: center; gap: 13px;
+    cursor: pointer;
+  }
+  .cta:hover { background: var(--brand-ink); }
+  .cta .sym { font-size: 30px; }
+
+  .safety {
+    margin-top: 18px; font-size: 15px; color: var(--ink-2);
+    display: flex; align-items: center; gap: 9px; justify-content: center;
+  }
+  .safety .sym { color: var(--ok); font-size: 20px; }
+</style>
+</head>
+<body>
+
+<div class="win">
+
+  <div class="head">
+    <div class="logo"><span class="sym">sort</span></div>
+    <div class="name">Scrinium</div>
+    <div class="tag">Downloads-Sortierer</div>
+    <div class="spacer"></div>
+    <button class="link"><span class="sym">language</span> Deutsch</button>
+    <button class="link"><span class="sym">light_mode</span> Hell</button>
+    <button class="link"><span class="sym">settings</span> Einstellungen</button>
+  </div>
+
+  <div class="body">
+
+    <div class="side">
+      <div class="side-lbl">Werkzeuge</div>
+      <button class="tool on">
+        <span class="sym">sort</span> Downloads-Sortierer
+        <span class="tool-dot"></span>
+      </button>
+      <button class="tool off">
+        <span class="sym">content_copy</span> Duplikate finden
+        <span class="tool-dot off"></span>
+      </button>
+      <button class="tool off">
+        <span class="sym">image_search</span> Bilder durchsuchen
+        <span class="tool-dot off"></span>
+      </button>
+    </div>
+
+    <div class="work">
+      <div class="w-title">Downloads aufräumen</div>
+      <div class="w-sub">
+        Scrinium sortiert fertige Dateien in passende Ordner.
+        Unfertige Downloads bleiben unangetastet.
+      </div>
+
+      <!-- Schritt 1 -->
+      <div class="step">
+        <div class="step-h">
+          <span class="step-n">1</span>
+          <span class="step-t">Welcher Ordner?</span>
+        </div>
+        <div class="row">
+          <span class="sym">folder</span>
+          <div class="row-txt">
+            <div class="row-lbl">Downloads-Ordner</div>
+            <div class="row-val">C:\Users\Friedrich\Downloads</div>
+          </div>
+          <button class="btn-sec"><span class="sym">folder_open</span> Anderen Ordner</button>
+        </div>
+      </div>
+
+      <!-- Schritt 2 -->
+      <div class="step">
+        <div class="step-h">
+          <span class="step-n">2</span>
+          <span class="step-t">Das passiert gleich (3 Dateien)</span>
+        </div>
+
+        <div class="list">
+          <div class="li">
+            <div class="ft" style="background:#2563EB">PDF</div>
+            <span class="li-n">Handbuch_final.pdf</span>
+            <span class="li-to">→ Dokumente</span>
+            <span class="li-sz">4,1 MB</span>
+          </div>
+          <div class="li">
+            <div class="ft" style="background:#16A34A">JPG</div>
+            <span class="li-n">urlaub.jpg</span>
+            <span class="li-to">→ Bilder</span>
+            <span class="li-sz">2,8 MB</span>
+          </div>
+          <div class="li">
+            <div class="ft" style="background:#7C3AED">MP4</div>
+            <span class="li-n">vorlesung.mp4</span>
+            <span class="li-to">→ Videos</span>
+            <span class="li-sz">1,1 GB</span>
+          </div>
+        </div>
+
+        <div class="ok-strip">
+          <span class="sym">check_circle</span>
+          <div>
+            <div class="ok-t">3 Dateien einsortiert</div>
+            <div class="ok-s">2 Downloads noch unfertig — warten auf dich</div>
+          </div>
+          <button class="btn-sec"><span class="sym">undo</span> Rückgängig</button>
+        </div>
+      </div>
+
+      <button class="cta"><span class="sym">sort</span> Jetzt sortieren</button>
+
+      <div class="safety">
+        <span class="sym">verified</span>
+        Nichts wird überschrieben. Du kannst alles rückgängig machen.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

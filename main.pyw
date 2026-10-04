@@ -24,10 +24,11 @@ def main() -> int:
 
         return run_cli(sys.argv[1:])
 
-    from scrinium.ui.app import run
+    # Ohne Argumente: das Fenster. Der Einstieg sitzt in scrinium.launcher,
+    # damit main.pyw und die gepackte EXE denselben Weg nehmen.
+    from scrinium.launcher import main as start
 
-    run()
-    return 0
+    return start()
 
 
 if __name__ == "__main__":

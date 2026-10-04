@@ -1,0 +1,283 @@
+<!DOCTYPE html><html class="dark" lang="de" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Scrinium — Downloads-Sortierer</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24..48,400..700,0..1,-50..200" rel="stylesheet">
+<style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #100f13;
+      color: #e6e1e5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .window-frame {
+      width: 1120px;
+      height: 760px;
+      background: #141218;
+      border-radius: 28px;
+      box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    @keyframes mdFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-md-fade {
+      animation: mdFadeIn 0.35s cubic-bezier(0.2, 0, 0, 1) forwards;
+    }
+
+    .animate-banner-fade {
+      animation: mdFadeIn 0.4s cubic-bezier(0.2, 0, 0, 1) 0.1s both;
+    }
+
+    /* MD3 State Layer hover & ripple feel */
+    .md-state-layer {
+      position: relative;
+      overflow: hidden;
+      transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1), transform 0.15s ease, box-shadow 0.2s ease;
+    }
+    .md-state-layer::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: currentColor;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
+    }
+    .md-state-layer:hover::after {
+      opacity: 0.08;
+    }
+    .md-state-layer:active::after {
+      opacity: 0.14;
+    }
+
+    /* Icon micro-movement on primary button */
+    .sort-btn:hover .sort-icon {
+      transform: translateY(2px);
+    }
+    .sort-icon {
+      transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .animate-md-fade, .animate-banner-fade, .animate-pulse {
+        animation: none !important;
+      }
+      .sort-icon {
+        transform: none !important;
+      }
+      .md-state-layer {
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="window-frame">
+<!-- Material 3 Top App Bar / Window Chrome -->
+<header class="h-[76px] bg-[#1c1b1f] border-b border-[#2d2930] px-7 flex items-center justify-between select-none">
+<div class="flex items-center gap-4">
+<!-- Brand Logo -->
+<div class="w-12 h-12 rounded-2xl overflow-hidden flex items-center justify-center flex-shrink-0 shadow-sm bg-[#0b57d0]">
+<img alt="Scrinium Logo" class="w-12 h-12 object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Veu90dm-xNpx3YikWnVj3REXtPN1vuy0kbqRjum-CGh2hPH5ptZt7sUqaG1JdPIKcZZzdWTwehnd2qIXFAzXBcuUt3FMXpp_NMQeAjsBwpHb7XFJ26DFRnxCu29pZLyzp6hi0o39ksjyA5iDrjx4KVXZV24CF8SYkg52T_kH-bzG-bMkT1u1YD3zKyb321sD7aE1zHmWPNZMTteDdNJ0qcMTWCbLLYDMUpVXh_XJmCPonPJOIMZJIhBQ">
+</div>
+<div>
+<div class="flex items-baseline gap-3">
+<span class="text-[26px] font-bold tracking-tight text-[#f5eff7]">Scrinium</span>
+
+</div>
+
+</div>
+</div>
+<!-- Action items on top bar -->
+<div class="flex items-center gap-3">
+<!-- Language selector (MD3 Tonal Button) -->
+<button class="md-state-layer h-[56px] px-5 rounded-full bg-[#2b2930] text-[#e6e1e5] font-semibold text-[17px] flex items-center gap-2.5 active:scale-[0.98]" type="button">
+<span class="material-symbols-outlined text-[24px] text-[#a8c7fa]">language</span>
+<span class="">Sprache: Deutsch</span>
+</button>
+<!-- Settings (MD3 Tonal Button) -->
+<button class="md-state-layer h-[56px] px-5 rounded-full bg-[#2b2930] text-[#e6e1e5] font-semibold text-[17px] flex items-center gap-2.5 active:scale-[0.98]" type="button">
+<span class="material-symbols-outlined text-[24px] text-[#cac4d0]">settings</span>
+<span class="">Einstellungen</span>
+</button>
+<!-- Windows Control Mockup -->
+<div class="flex items-center ml-2 border-l border-[#49454f]/40 pl-3 gap-1">
+<div class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#2b2930] text-[#cac4d0] cursor-pointer transition">
+<span class="text-xl leading-none">─</span>
+</div>
+<div class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#2b2930] text-[#cac4d0] cursor-pointer transition">
+<span class="text-lg leading-none">□</span>
+</div>
+<div class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#8c1d18]/40 hover:text-[#f2b8b5] text-[#cac4d0] cursor-pointer transition">
+<span class="text-lg leading-none">✕</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Workspace: Navigation Drawer + Main Content -->
+<div class="flex flex-1 overflow-hidden">
+<!-- 1. Left Sidebar: MD3 Navigation Drawer (280px) -->
+<aside class="w-[280px] bg-[#1c1b1f] border-r border-[#2d2930] flex flex-col justify-between p-4 select-none">
+<div>
+<!-- Section Title -->
+<h2 class="text-[13px] font-bold tracking-wider uppercase text-[#a5a0ab] mb-4 px-3 pt-1">
+            MEINE WERKZEUGE
+          </h2>
+<nav class="space-y-2">
+<!-- Active Item: MD3 Navigation Drawer Item -->
+<div class="w-full bg-[#35343a] text-[#e6e1e5] rounded-2xl p-4 shadow-sm relative overflow-hidden transition">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[19px] font-bold flex items-center gap-3 text-[#d3e3fd]">
+<span class="material-symbols-outlined text-[26px] text-[#a8c7fa]">drive_file_move</span>
+                  Downloads-Sortierer
+                </span>
+</div>
+<div class="flex items-center gap-2 mt-1">
+<!-- Status Pill Badge -->
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[14px] font-bold bg-[#0f5223] text-[#a6f0b4]">
+<span class="w-2.5 h-2.5 rounded-full bg-[#4ade80] animate-pulse"></span>
+                  bereit
+                </span>
+<span class="text-[14px] text-[#cac4d0]">Ausgewählt</span>
+</div>
+</div>
+<!-- Inactive Item 1: Duplikate finden -->
+<div class="w-full bg-[#201f24] rounded-2xl p-4 opacity-50 cursor-not-allowed">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[18px] font-medium text-[#938f99] flex items-center gap-3">
+<span class="material-symbols-outlined text-[24px] text-[#938f99]">content_copy</span>
+                  Duplikate finden
+                </span>
+</div>
+<div class="mt-1">
+<span class="inline-flex items-center px-3 py-0.5 rounded-full text-[13px] font-medium bg-[#2b2930] text-[#938f99]">
+                  nicht installiert
+                </span>
+</div>
+</div>
+<!-- Inactive Item 2: Bilder durchsuchen -->
+<div class="w-full bg-[#201f24] rounded-2xl p-4 opacity-50 cursor-not-allowed">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[18px] font-medium text-[#938f99] flex items-center gap-3">
+<span class="material-symbols-outlined text-[24px] text-[#938f99]">image_search</span>
+                  Bilder durchsuchen
+                </span>
+</div>
+<div class="mt-1">
+<span class="inline-flex items-center px-3 py-0.5 rounded-full text-[13px] font-medium bg-[#2b2930] text-[#938f99]">
+                  nicht installiert
+                </span>
+</div>
+</div>
+</nav>
+</div>
+<!-- Sidebar Bottom Notice Card (MD3 Surface-Variant) -->
+<div class="bg-[#2b2930] rounded-2xl p-3.5">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-[22px] text-[#a8c7fa] flex-shrink-0 mt-0.5">info</span>
+<div class="text-[14px] leading-snug text-[#cac4d0]">
+<strong class="text-[#f5eff7] block font-semibold">Werkzeuge nachrüsten:</strong>
+              Neue Werkzeuge können sie in den Einstellungen nachrüsten.</div>
+</div>
+</div>
+</aside>
+<!-- 2. Main Content Area -->
+<main class="flex-1 bg-[#141218] p-8 overflow-y-auto flex flex-col justify-between">
+<div class="space-y-6 max-w-[760px] animate-md-fade">
+<!-- Page Header & Badge -->
+<div>
+<div class="flex items-center gap-3">
+<h1 class="text-[32px] font-bold text-[#f5eff7] tracking-tight">Downloads-Sortierer</h1>
+<span class="bg-[#0f5223] text-[#a6f0b4] font-semibold text-[15px] px-3.5 py-1 rounded-full">Aktiv</span>
+</div>
+<p class="text-[19px] text-[#cac4d0] mt-1 font-normal">
+              Ordnet fertige Dateien in passende Ordner
+            </p>
+</div>
+<!-- Path Card (MD3 Elevated Card / Surface Container) -->
+<div class="bg-[#201f24] rounded-2xl p-4 flex items-center justify-between gap-4 shadow-sm border border-[#2d2930]">
+<div class="flex items-center gap-4 min-w-0">
+<div class="w-14 h-14 rounded-2xl bg-[#2b2930] flex items-center justify-center flex-shrink-0 text-[#a8c7fa]">
+<span class="material-symbols-outlined text-[32px]">folder</span>
+</div>
+<div class="min-w-0">
+<span class="text-[14px] font-bold text-[#a5a0ab] uppercase tracking-wide block">Downloads-Ordner</span>
+<span class="text-[20px] font-semibold text-[#f5eff7] truncate block select-all">
+                  C:\Users\Friedrich\Downloads
+                </span>
+</div>
+</div>
+<!-- MD3 Outlined Button (min 56px height) -->
+<button class="md-state-layer h-[56px] px-6 rounded-full border border-[#49454f] text-[#d3e3fd] hover:border-[#a8c7fa] font-bold text-[18px] flex items-center gap-2 flex-shrink-0 active:scale-[0.98]" type="button">
+<span class="material-symbols-outlined text-[22px]">edit</span>
+<span class="">Ordner wählen</span>
+</button>
+</div>
+<!-- Primary Action Button (MD3 Filled Button, 74px tall, senior-accessible) -->
+<div class="pt-2">
+<button class="sort-btn md-state-layer w-full h-[74px] rounded-full bg-[#0b57d0] hover:bg-[#1262e3] hover:shadow-lg text-white font-bold text-[24px] tracking-wide flex items-center justify-center gap-3 active:scale-[0.99] transition shadow-md" type="button">
+<span class="material-symbols-outlined text-[32px] sort-icon">auto_fix_high</span>
+<span class="">Jetzt sortieren</span>
+</button>
+
+</div>
+<!-- Secondary Actions: MD3 Tonal Buttons (min 56px height) -->
+<div class="grid grid-cols-2 gap-4 pt-1">
+<button class="md-state-layer h-[60px] rounded-full bg-[#2b2930] hover:bg-[#35343a] text-[#f5eff7] font-semibold text-[18px] flex items-center justify-center gap-3 active:scale-[0.98]" type="button">
+<span class="material-symbols-outlined text-[24px] text-[#cac4d0]">folder_open</span>
+<span class="">Ordner öffnen</span>
+</button>
+<button class="md-state-layer h-[60px] rounded-full bg-[#2b2930] hover:bg-[#35343a] text-[#f5eff7] font-semibold text-[18px] flex items-center justify-center gap-3 active:scale-[0.98]" type="button">
+<span class="material-symbols-outlined text-[24px] text-[#cac4d0]">history</span>
+<span class="">Verlauf ansehen</span>
+</button>
+</div>
+</div>
+<!-- Success Banner: MD3 Green Tonal Container -->
+<div class="mt-6 bg-[#0a3818] rounded-2xl p-4 flex items-center justify-between shadow-sm animate-banner-fade">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-[#22c55e] text-[#052e16] flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[28px] font-bold">check</span>
+</div>
+<div>
+<span class="text-[19px] font-bold text-[#f5eff7] block">
+                14 Dateien einsortiert / 128 MB · 2 noch unfertig
+              </span>
+<span class="text-[15px] text-[#a6f0b4] font-medium">
+                Ihre Dateien wurden sicher in Dokumente und Bilder verschoben.
+              </span>
+</div>
+</div>
+<!-- Undo Button (MD3 Filled Tonal Button) -->
+<button class="md-state-layer h-[56px] px-6 rounded-full bg-[#201f24] hover:bg-[#2b2930] text-[#f5eff7] border border-[#49454f]/40 hover:border-[#a8c7fa] font-bold text-[18px] flex items-center gap-2 flex-shrink-0 active:scale-[0.98] transition shadow-sm" type="button"><span class="material-symbols-outlined text-[22px] text-[#a8c7fa]">undo</span><span class="">Rückgängig</span></button>
+</div>
+</main>
+</div>
+</div>
+
+
+</body></html>

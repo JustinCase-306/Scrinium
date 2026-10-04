@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Scrinium</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400;8..144,500;8..144,600;8..144,700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap">
+<style>
+  :root {
+    --bg:          #141218;
+    --surface:     #1c1b1f;
+    --surface-2:   #201f24;
+    --surface-3:   #2b2930;
+    --surface-4:   #35343a;
+
+    --on:          #e6e1e5;
+    --on-2:        #cac4d0;
+    --on-3:        #938f99;
+    --on-4:        #a5a0ab;
+
+    --primary:      #a8c7fa;
+    --on-primary:   #0b3d75;
+    --primary-sub:  #d3e3fd;
+
+    --green:       #a6f0b4;
+    --on-green:    #0f5223;
+    --green-2:     #7dd6a0;
+
+    --danger:      #ffb4ab;
+    --on-danger:   #690005;
+
+    --outline:     #49454f;
+    --outline-2:   #938f99;
+
+    --r-sm: 8px;
+    --r:    14px;
+    --r-lg: 16px;
+    --r-xl: 20px;
+    --r-full: 999px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+
+  body {
+    font-family: "Roboto Flex", "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--on);
+    overflow: hidden;
+    font-size: 18px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    color-scheme: dark;
+    user-select: none;
+  }
+
+  ::-webkit-scrollbar { width: 16px; height: 16px; }
+  ::-webkit-scrollbar-track { background: var(--surface);
+                             border-left: 1px solid var(--outline); }
+  ::-webkit-scrollbar-thumb { background: var(--surface-4);
+                               border: 4px solid var(--surface);
+                               border-radius: var(--r-full); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--on-4); }
+  .work, .rail, .side { scrollbar-width: thin;
+                         scrollbar-color: var(--surface-4) var(--surface); }
+
+  .sym { font-family: "Material Symbols Rounded"; font-weight: normal;
+         font-style: normal; font-size: 24px; line-height: 1;
+         display: inline-block; white-space: nowrap; letter-spacing: normal;
+         text-transform: none; -webkit-font-feature-settings: 'liga'; }
+
+  .win { width: 100%; height: 100vh; min-width: 900px; min-height: 620px;
+         display: flex; flex-direction: column; }
+
+  /* ── Kopf ─────────────────────────────────────────────── */
+  .top { min-height: 84px; flex-shrink: 0; display: flex; align-items: center;
+         gap: 18px; padding: 0 1.35rem; background: var(--surface); }
+  .mark { width: 52px; height: 52px; border-radius: var(--r);
+          background: var(--primary); color: var(--on-primary);
+          display: grid; place-items: center; flex-shrink: 0; }
+  .mark .sym { font-size: 30px; }
+  .brand { font-size: 26px; font-weight: 700; letter-spacing: -0.3px; }
+  .top-spacer { flex: 1; }
+
+  .btn-top { min-height: 56px; padding: 0 26px; border-radius: var(--r-full);
+             background: var(--surface-3); border: 1px solid var(--outline);
+             color: var(--on); font-family: inherit; font-size: 18px;
+             font-weight: 500; display: inline-flex; align-items: center;
+             gap: 10px; cursor: pointer; }
+  .btn-top:hover { background: var(--surface-4); }
+
+  /* ── Drei Spalten ─────────────────────────────────────── */
+  .body { flex: 1; display: flex; min-height: 0; min-width: 0; }
+
+  .rail { width: 300px; flex-shrink: 0; min-height: 0; overflow-y: auto;
+          background: var(--surface);
+          border-right: 1px solid var(--outline); padding: 1.5rem 1rem;
+          display: flex; flex-direction: column; }
+  .rail-h { font-size: 15px; font-weight: 700; color: var(--on-3);
+            text-transform: uppercase; letter-spacing: 1.2px; padding: 0 12px 18px; }
+
+  .tool { display: flex; align-items: flex-start; gap: 14px; width: 100%;
+          min-height: 76px; padding: 16px 14px; border: none;
+          border-radius: var(--r-xl); background: transparent; color: var(--on-2);
+          font-family: inherit; font-size: 19px; text-align: left;
+          cursor: pointer; }
+  .tool .sym { font-size: 28px; color: var(--on-3); flex-shrink: 0; margin-top: 2px; }
+  .tool-t { min-width: 0; flex: 1; }
+  .tool-name { display: block; min-width: 0; overflow-wrap: anywhere;
+               font-weight: 600; color: var(--on-2); line-height: 1.3; }
+  .tool.on { background: var(--surface-3); }
+  .tool.on .sym { color: var(--primary); }
+  .tool.on .tool-name { color: var(--on); }
+
+  .state { display: inline-flex; align-items: center; gap: 8px; max-width: 100%;
+           margin-top: 8px; padding: 4px 14px 4px 10px; border-radius: var(--r-full);
+           font-size: 15px; font-weight: 600; border: 1px solid var(--outline);
+           background: var(--surface-4); color: var(--on-3); }
+  .state.ok { background: color-mix(in srgb, var(--green) 18%, transparent);
+              color: var(--green); border-color: color-mix(in srgb, var(--green) 40%, transparent); }
+  .state .sym { font-size: 18px; }
+  .state .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green-2); }
+
+  .tool-schalter { margin-left: auto; align-self: center; min-height: 48px;
+                   min-width: 78px; padding: 0 14px; border-radius: var(--r-full);
+                   border: 1px solid var(--outline-2); background: transparent;
+                   color: var(--on-2); font-family: inherit; font-size: 15px;
+                   font-weight: 600; cursor: pointer; flex-shrink: 0; }
+  .tool-schalter:hover { background: var(--surface-3); }
+  .tool-schalter.an { background: var(--green); color: var(--on-green); border-color: var(--green); }
+
+  .rail-f { margin-top: auto; padding: 18px 12px 0;
+            border-top: 1px solid var(--outline); font-size: 15px;
+            color: var(--on-3); line-height: 1.55; }
+  .rail-f b { display: block; color: var(--on-2); font-size: 16px;
+              margin-bottom: 5px; font-weight: 600; }
+
+  /* min-height: 0 ist hier entscheidend: in einer Flex-REIHE begrenzt die
+     Hoehe die Querseite. Ohne das wächst .work über seinen Kasten hinaus
+     und overflow-y: auto greift nie - die Liste wird dann unerreichbar. */
+  .work {
+    flex: 1; min-width: 0; min-height: 0;
+    padding: 2rem 2.1rem;
+    overflow-y: auto;
+  }
+  .w-title { font-size: 34px; font-weight: 700; letter-spacing: -0.5px; }
+  .w-sub { font-size: 18px; color: var(--on-2); margin-top: 8px; max-width: 640px; }
+
+  .cta { margin-top: 30px; width: 100%; min-height: 88px; border: none;
+         border-radius: var(--r-full); background: var(--primary);
+         color: var(--on-primary); font-family: inherit; font-size: 22px;
+         font-weight: 700; display: flex; align-items: center;
+         justify-content: center; gap: 14px; cursor: pointer; }
+  .cta:hover { background: var(--primary-sub); }
+  .cta:disabled { background: var(--surface-4); color: var(--on-3); cursor: default; }
+  .cta .sym { font-size: 30px; }
+  .cta-note { margin-top: 12px; text-align: center; font-size: 15px; color: var(--on-3); }
+
+  .files { margin-top: 30px; }
+  .files-h { display: flex; align-items: baseline; margin-bottom: 14px;
+             font-size: 17px; color: var(--on-3); font-weight: 500; }
+  .files-h b { font-size: 19px; color: var(--on-2); font-weight: 600; margin-right: 10px; }
+
+  .file { display: flex; align-items: center; gap: 16px; min-height: 72px;
+          padding: 14px 20px; background: var(--surface);
+          border: 1px solid var(--outline); border-radius: var(--r);
+          flex-wrap: wrap; }
+  .file + .file { margin-top: 10px; }
+  .f-ico { width: 46px; height: 46px; border-radius: var(--r-sm);
+           display: grid; place-items: center; flex-shrink: 0;
+           font-size: 14px; font-weight: 700; letter-spacing: .2px; }
+  .f-name { font-size: 19px; font-weight: 500; flex: 1; min-width: 0;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .f-to { display: inline-flex; align-items: center; gap: 9px; font-size: 17px;
+          font-weight: 600; color: var(--primary); flex: 0 0 auto;
+          background: color-mix(in srgb, var(--primary) 16%, transparent);
+          border: 1px solid color-mix(in srgb, var(--primary) 45%, transparent);
+          padding: 8px 18px; border-radius: var(--r-full); white-space: nowrap; }
+  .f-to .sym { font-size: 18px; flex-shrink: 0; }
+  .f-to.stay { color: var(--on-3); background: var(--surface-3); border-color: var(--outline-2); }
+  .f-sz { font-size: 16px; color: var(--on-3); width: 92px; text-align: right; }
+
+  .done { margin-top: 26px; padding: 20px 24px; border-radius: var(--r-lg);
+          background: color-mix(in srgb, var(--green) 12%, var(--surface));
+          border: 1px solid color-mix(in srgb, var(--green) 40%, transparent);
+          display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .done .sym { color: var(--green); font-size: 34px; flex-shrink: 0; }
+  .done-t { font-size: 21px; font-weight: 700; color: var(--green); }
+  .done-s { font-size: 16px; color: var(--on-2); margin-top: 4px; }
+  .done > div { min-width: 0; flex: 1 1 200px; }
+
+  .btn-sec { margin-left: auto; min-height: 56px; padding: 0 26px;
+             border-radius: var(--r-full); border: 1px solid var(--outline-2);
+             background: transparent; color: var(--on); font-family: inherit;
+             font-size: 17px; font-weight: 600; display: inline-flex;
+             align-items: center; gap: 10px; cursor: pointer; flex-shrink: 0; }
+  .btn-sec:hover { background: var(--surface-3); }
+
+  .side { width: 340px; flex-shrink: 0; min-height: 0; overflow-y: auto;
+          background: var(--surface);
+          border-left: 1px solid var(--outline); padding: 2rem 1.5rem;
+          display: flex; flex-direction: column; }
+  .s-h { font-size: 15px; font-weight: 700; color: var(--on-3);
+         text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 18px; }
+
+  .path { display: flex; align-items: center; gap: 14px; background: var(--surface-2);
+          border: 1px solid var(--outline); border-radius: var(--r); padding: 18px 20px; }
+  .path .sym { color: var(--on-3); font-size: 28px; flex-shrink: 0; }
+  .path-txt { min-width: 0; }
+  .path-lbl { font-size: 15px; color: var(--on-3); }
+  .path-val { font-size: 16px; font-weight: 600; margin-top: 3px;
+              overflow-wrap: anywhere; line-height: 1.45; }
+
+  .side-actions { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .btn-block { width: 100%; min-height: 60px; border-radius: var(--r-full);
+               border: 1px solid var(--outline); background: var(--surface-2);
+               color: var(--on); font-family: inherit; font-size: 18px;
+               font-weight: 500; display: flex; align-items: center; gap: 12px;
+               padding: 0 20px; cursor: pointer; }
+  .btn-block:hover { background: var(--surface-3); }
+  .btn-block .sym { color: var(--on-3); }
+
+  .safety { margin-top: auto; padding-top: 22px; border-top: 1px solid var(--outline);
+            font-size: 16px; color: var(--on-2); line-height: 1.6;
+            display: flex; gap: 12px; align-items: flex-start; }
+  .safety .sym { color: var(--green); font-size: 24px; flex-shrink: 0; }
+  .safety b { color: var(--on); }
+
+  .leer { padding: 3rem 0; color: var(--on-3); font-size: 18px; }
+
+  /* ── Skalierung ───────────────────────────────────────── */
+  @media (max-width: 1180px) {
+    .body { flex-wrap: wrap; }
+    .rail { width: 264px; }
+    .work { flex: 1 1 560px; }
+    .side { width: 100%; flex: 0 0 auto; border-left: none;
+            border-top: 1px solid var(--outline); flex-direction: row;
+            flex-wrap: wrap; align-items: flex-start; gap: 1.5rem; }
+    .s-h { flex: 1 1 100%; margin-bottom: 0; }
+    .side-actions { flex: 1 1 300px; }
+    .safety { margin-top: 0; padding-top: 0; border-top: none; flex: 1 1 320px; }
+    .side .path { flex: 1 1 320px; }
+  }
+  @media (max-width: 1000px) {
+    .rail { width: 80px; padding: 1.5rem .35rem; align-items: center; }
+    .rail-h, .rail-f, .tool-name, .state, .tool-schalter { display: none; }
+    .tool { justify-content: center; align-items: center; padding: 0;
+            min-height: 56px; width: 56px; }
+    .tool .sym { font-size: 28px; margin-top: 0; }
+  }
+  @media (min-width: 1600px) {
+    .rail { width: 330px; }
+    .side { width: 380px; }
+  }
+  @media (max-width: 900px) { .side { flex-direction: column; } }
+
+  .cta, .file, .done { transition: opacity .12s; }
+  .laeuft .cta { opacity: .7; }
+</style>
+</head>
+<body>
+
+<div class="win">
+  <div class="top">
+    <div class="mark"><span class="sym">sort</span></div>
+    <div class="brand">Scrinium</div>
+    <div class="top-spacer"></div>
+    <button class="btn-top" id="btn-sprache">
+      <span class="sym">language</span> <span id="sprache-text">Deutsch</span>
+    </button>
+    <button class="btn-top" id="btn-einstellungen">
+      <span class="sym">settings</span> Einstellungen
+    </button>
+  </div>
+
+  <div class="body">
+    <div class="rail">
+      <div class="rail-h">Meine Werkzeuge</div>
+      <div id="werkzeug-liste"></div>
+      <div class="rail-f">
+        <b>Werkzeuge nachrüsten</b>
+        Neue Werkzeuge kommen automatisch mit dem nächsten Update.
+      </div>
+    </div>
+
+    <div class="work" id="arbeitsflaeche">
+      <div class="leer">Scrinium startet …</div>
+    </div>
+
+    <div class="side">
+      <div class="s-h">Downloads-Ordner</div>
+      <div class="path">
+        <span class="sym">folder</span>
+        <div class="path-txt">
+          <div class="path-lbl">Aktueller Ordner</div>
+          <div class="path-val" id="ordner-pfad">—</div>
+        </div>
+      </div>
+      <div class="side-actions">
+        <button class="btn-block" id="btn-ordner">
+          <span class="sym">folder_open</span> Anderen Ordner wählen
+        </button>
+        <button class="btn-block" id="btn-oeffnen">
+          <span class="sym">open_in_new</span> Ordner öffnen
+        </button>
+      </div>
+      <div class="safety">
+        <span class="sym">verified</span>
+        <div>
+          <b>Alles ist rückgängig machbar.</b><br>
+          Scrinium überschreibt nie eine Datei. Bei Namenskonflikten
+          wird eine Nummer angehängt.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  Scrinium - Verbindung zum Python-Kern
+// ═══════════════════════════════════════════════════════════
+var scrinium = (function () {
+
+  var ZUSTAND = { werkzeuge: [], einstellungen: {}, ergebnis: null };
+  var GEWAHLT = null;
+  var pfad = (window.pywebview && window.pywebview.api) ? 'pywebview.api' : null;
+
+  // pywebview haengt seine API erst nach dem Laden an. Wir warten darauf.
+  function bereit() {
+    return new Promise(function (resolve) {
+      if (window.pywebview && window.pywebview.api) return resolve(window.pywebview.api);
+      var versuche = 0;
+      var t = setInterval(function () {
+        versuche++;
+        if (window.pywebview && window.pywebview.api) {
+          clearInterval(t); resolve(window.pywebview.api);
+        } else if (versuche > 60) {
+          clearInterval(t); resolve(null);
+        }
+      }, 250);
+    });
+  }
+
+  var API = null;
+
+  // ── Texte ────────────────────────────────────────────────
+  var TEXTE = {
+    de: {
+      werkzeuge: 'Meine Werkzeuge', bereit: 'bereit', blockiert: 'blockiert',
+      an: 'an', aus: 'aus', einschalten: 'einschalten', ausschalten: 'ausschalten',
+      nochNichtDa: 'noch nicht da',
+      sortieren: 'Jetzt sortieren', einsortiert: 'Dateien einsortiert',
+      uebersprungen: 'übersprungen', dateienGeprueft: 'Dateien geprüft',
+      passiertGleich: 'Das passiert gleich', rueckgaengig: 'Rückgängig',
+      laedt: 'lädt noch', unbekannt: 'Dateiname unbekannt',
+      bleibtLiegen: 'bleibt liegen', nichtsZuTun: 'Nichts zu sortieren',
+      heruntergeladen: 'heruntergeladen', gesamt: 'gesamt',
+      ordnerWaehlen: 'Anderen Ordner wählen', ordnerOeffnen: 'Ordner öffnen',
+      downloadsOrdner: 'Downloads-Ordner', aktuellerOrdner: 'Aktueller Ordner',
+      rueckgaengigFertig: 'Dateien zurückverschoben', daten: 'Daten',
+      werkzeugKaputt: 'Werkzeug ist kaputt', werkzeugFehlt: 'Werkzeug nicht gefunden',
+      nachruesten: 'Werkzeuge nachrüsten',
+      nachruestenText: 'Neue Werkzeuge kommen automatisch mit dem nächsten Update.',
+      einstellungen: 'Einstellungen', sprache: 'Sprache',
+      deutsch: 'Deutsch', english: 'English',
+      nichtVerbunden: 'Keine Verbindung zum Programm. Sortieren geht trotzdem per CLI.'
+    },
+    en: {
+      werkzeuge: 'My tools', bereit: 'ready', blockiert: 'blocked',
+      an: 'on', aus: 'off', einschalten: 'enable', ausschalten: 'disable',
+      nochNichtDa: 'not installed yet',
+      sortieren: 'Sort now', einsortiert: 'files sorted',
+      uebersprungen: 'skipped', dateienGeprueft: 'files checked',
+      passiertGleich: 'This is what happens', rueckgaengig: 'Undo',
+      laedt: 'still downloading', unbekannt: 'unknown filename',
+      bleibtLiegen: 'stays put', nichtsZuTun: 'Nothing to sort',
+      heruntergeladen: 'downloaded', gesamt: 'total',
+      ordnerWaehlen: 'Choose another folder', ordnerOeffnen: 'Open folder',
+      downloadsOrdner: 'Downloads folder', aktuellerOrdner: 'Current folder',
+      rueckgaengigFertig: 'Files moved back', daten: 'data',
+      werkzeugKaputt: 'tool is broken', werkzeugFehlt: 'tool not found',
+      nachruesten: 'Add tools',
+      nachruestenText: 'New tools arrive automatically with the next update.',
+      einstellungen: 'Settings', sprache: 'Language',
+      deutsch: 'Deutsch', english: 'English',
+      nichtVerbunden: 'No connection to the program. Sorting still works via CLI.'
+    }
+  };
+
+  var T = TEXTE.de;
+  function sprache() {
+    return (ZUSTAND.einstellungen && ZUSTAND.einstellungen.sprache === 'en') ? 'en' : 'de';
+  }
+  function sag(k) { return (TEXTE[sprache()] || TEXTE.de)[k] || k; }
+
+  // ── Hilfen ───────────────────────────────────────────────
+  function el(tag, klasse, text) {
+    var e = document.createElement(tag);
+    if (klasse) e.className = klasse;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function icon(name) {
+    var s = el('span', 'sym');
+    s.textContent = name;
+    return s;
+  }
+  function groesse(bytes) {
+    if (!bytes) return '';
+    var mb = bytes / 1048576;
+    if (mb >= 1024) return (mb / 1024).toFixed(1) + ' GB';
+    return mb.toFixed(1).replace('.', ',') + ' MB';
+  }
+  function endung(name) {
+    var i = name.lastIndexOf('.');
+    return i > 0 ? name.slice(i + 1).toUpperCase().slice(0, 4) : '?';
+  }
+  var ENDUNG_FARBE = {
+    PDF: ['#0b57d0', '#d3e3fd'], JPG: ['#146c2e', '#a6f0b4'],
+    PNG: ['#146c2e', '#a6f0b4'], MP4: ['#5b3ca8', '#e0d0ff'],
+    MKV: ['#5b3ca8', '#e0d0ff'], MP3: ['#a03ca8', '#f0d0ff'],
+    ZIP: ['#8a6d1f', '#ffe8a8'], EXE: ['#a03030', '#ffd0d0'],
+    DOC: ['#0b57d0', '#d3e3fd'], XLS: ['#146c2e', '#a6f0b4'],
+    PPT: ['#a04030', '#ffd0c0'], TXT: ['#4a4450', '#938f99']
+  };
+  function endungFarbe(end) {
+    return ENDUNG_FARBE[end] || ['#4a4450', '#938f99'];
+  }
+
+  // ── Werkzeugleiste ───────────────────────────────────────
+  function zeichneWerkzeuge() {
+    var box = document.getElementById('werkzeug-liste');
+    box.innerHTML = '';
+    document.querySelector('.rail-h').textContent = sag('werkzeuge');
+
+    if (!ZUSTAND.werkzeuge.length) {
+      box.appendChild(el('div', 'leer', sag('nochNichtDa')));
+      return;
+    }
+
+    ZUSTAND.werkzeuge.forEach(function (w) {
+      var b = el('button', 'tool' + (w.id === GEWAHLT ? ' on' : ''));
+      b.appendChild(icon(iconName(w.id)));
+
+      var t = el('div', 'tool-t');
+      t.appendChild(el('span', 'tool-name', w.name));
+
+      var st = el('span', 'state');
+      if (w.fehler) {
+        st.appendChild(icon('error'));
+        st.appendChild(document.createTextNode(sag('werkzeugKaputt')));
+      } else if (!w.bereit) {
+        st.appendChild(icon('block'));
+        st.appendChild(document.createTextNode(w.grund || sag('blockiert')));
+      } else {
+        st.appendChild(el('span', 'dot'));
+        st.appendChild(document.createTextNode(sag('bereit')));
+      }
+      t.appendChild(st);
+      b.appendChild(t);
+
+      var schalter = el('button', 'tool-schalter' + (w.an ? ' an' : ''),
+                        w.an ? sag('aus') : sag('einschalten'));
+      schalter.onclick = function (ev) {
+        ev.stopPropagation();
+        API.werkzeug_schalten(w.id, !w.an).then(function (z) {
+          zustand(z);
+        });
+      };
+      b.appendChild(schalter);
+
+      b.onclick = function () { waehlen(w.id); };
+      box.appendChild(b);
+    });
+  }
+
+  function iconName(id) {
+    if (/download|sort/.test(id)) return 'sort';
+    if (/dup|kopie|copy/.test(id)) return 'content_copy';
+    if (/bild|image|ocr/.test(id)) return 'image_search';
+    if (/ki|ai|smart/.test(id)) return 'auto_awesome';
+    if (/putz|clean/.test(id)) return 'cleaning_services';
+    if (/speicher|storage/.test(id)) return 'donut_large';
+    return 'extension';
+  }
+
+  // ── Arbeitsflaeche ───────────────────────────────────────
+  function waehlen(id) {
+    GEWAHLT = id;
+    ZUSTAND.ergebnis = null;
+    ZUSTAND.vorschau = null;
+    zeichneWerkzeuge();
+    zeichneArbeit();
+    vorschauLaden();
+  }
+
+  function aktuellesWerkzeug() {
+    for (var i = 0; i < ZUSTAND.werkzeuge.length; i++) {
+      if (ZUSTAND.werkzeuge[i].id === GEWAHLT) return ZUSTAND.werkzeuge[i];
+    }
+    return ZUSTAND.werkzeuge[0] || null;
+  }
+
+  function zeichneArbeit() {
+    var w = document.getElementById('arbeitsflaeche');
+    w.innerHTML = '';
+
+    var werkzeug = aktuellesWerkzeug();
+    if (!werkzeug) {
+      w.appendChild(el('div', 'leer', sag('nochNichtDa')));
+      return;
+    }
+
+    w.appendChild(el('div', 'w-title', werkzeug.name));
+    w.appendChild(el('div', 'w-sub', beschreibung(werkzeug.id)));
+
+    if (!werkzeug.bereit && werkzeug.grund) {
+      var warnung = el('div', 'done');
+      warnung.style.background = 'color-mix(in srgb, var(--danger) 12%, var(--surface))';
+      warnung.style.borderColor = 'color-mix(in srgb, var(--danger) 40%, transparent)';
+      warnung.appendChild(icon('warning'));
+      var wd = el('div');
+      wd.appendChild(el('div', 'done-t', werkzeug.grund));
+      wd.appendChild(el('div', 'done-s', ''));
+      warnung.appendChild(wd);
+      w.appendChild(warnung);
+      return;
+    }
+
+    // Der grosse Aufruf
+    var start = el('button', 'cta');
+    start.appendChild(icon(iconName(werkzeug.id)));
+    start.appendChild(document.createTextNode(sag('sortieren')));
+    start.onclick = function () { starten(); };
+    w.appendChild(start);
+    w.appendChild(el('div', 'cta-note', ''));
+
+    // Vorschau, falls es eine gibt
+    if (ZUSTAND.vorschau) {
+      w.appendChild(zeichneDateien(ZUSTAND.vorschau));
+    }
+
+    // Ergebnis nach einem Lauf
+    if (ZUSTAND.ergebnis) {
+      w.appendChild(zeichneErgebnis(ZUSTAND.ergebnis));
+    }
+  }
+
+  function beschreibung(id) {
+    if (/download|sort/.test(id)) {
+      return sprache() === 'en'
+        ? 'Sorts finished files into matching folders. Unfinished downloads stay untouched.'
+        : 'Ordnet fertige Dateien in passende Ordner. Unfertige Downloads bleiben liegen.';
+    }
+    return sprache() === 'en' ? 'A Scrinium tool.' : 'Ein Scrinium-Werkzeug.';
+  }
+
+  function zeichneDateien(vorschau) {
+    var box = el('div', 'files');
+    var kopf = el('div', 'files-h');
+    kopf.appendChild(el('b', null, sag('passiertGleich')));
+    kopf.appendChild(document.createTextNode(vorschau.geprueft + ' ' + sag('dateienGeprueft')));
+    box.appendChild(kopf);
+
+    vorschau.dateien.forEach(function (d) {
+      var row = el('div', 'file');
+      var end = endung(d.name);
+      var farbe = endungFarbe(end);
+
+      var ico = el('div', 'f-ico', end);
+      ico.style.background = farbe[0];
+      ico.style.color = farbe[1];
+      row.appendChild(ico);
+
+      row.appendChild(el('span', 'f-name', d.name));
+
+      var ziel = el('span', 'f-to' + (d.ziel ? '' : ' stay'));
+      if (d.ziel) {
+        ziel.appendChild(icon('arrow_forward'));
+        ziel.appendChild(document.createTextNode(d.ziel));
+      } else {
+        ziel.appendChild(icon('help'));
+        ziel.appendChild(document.createTextNode(d.grund || sag('bleibtLiegen')));
+      }
+      row.appendChild(ziel);
+
+      if (d.groesse) row.appendChild(el('span', 'f-sz', groesse(d.groesse)));
+      box.appendChild(row);
+    });
+    return box;
+  }
+
+  function zeichneErgebnis(e) {
+    var box = el('div', 'done');
+    if (e.fehler) {
+      box.style.background = 'color-mix(in srgb, var(--danger) 12%, var(--surface))';
+      box.style.borderColor = 'color-mix(in srgb, var(--danger) 40%, transparent)';
+      box.appendChild(icon('error'));
+    } else {
+      box.appendChild(icon('check_circle'));
+    }
+
+    var d = el('div');
+    d.appendChild(el('div', 'done-t', e.text));
+    var teile = [];
+    if (e.daten && e.daten.groesse) teile.push(groesse(e.daten.groesse));
+    if (e.daten && e.daten.uebersprungen) teile.push(e.daten.uebersprungen + ' ' + sag('uebersprungen'));
+    d.appendChild(el('div', 'done-s', teile.join(' · ')));
+    box.appendChild(d);
+
+    (e.aktionen || []).forEach(function (a) {
+      var knopf = el('button', 'btn-sec');
+      knopf.appendChild(icon('undo'));
+      knopf.appendChild(document.createTextNode(a[0] || sag('rueckgaengig')));
+      knopf.onclick = function () { aktion(a); };
+      box.appendChild(knopf);
+    });
+    return box;
+  }
+
+  // ── Aktionen ─────────────────────────────────────────────
+  function starten() {
+    var werkzeug = aktuellesWerkzeug();
+    if (!werkzeug) return;
+    document.body.classList.add('laeuft');
+    API.werkzeug_starten(werkzeug.id).then(function (e) {
+      document.body.classList.remove('laeuft');
+      ZUSTAND.ergebnis = e;
+      zeichneArbeit();
+      neuLaden();
+    }).catch(function (err) {
+      document.body.classList.remove('laeuft');
+      ZUSTAND.ergebnis = { text: String(err), aktionen: [], daten: {}, fehler: true };
+      zeichneArbeit();
+    });
+  }
+
+  function aktion(a) {
+    // Undo und Co. laufen ueber eine eigene Python-Funktion; die kommt
+    // aus den 'aktionen' des Werkzeugs und traegt ihre Kennung.
+    if (!API['_aktion']) {
+      ZUSTAND.ergebnis = { text: sag('nichtVerbunden'), aktionen: [], daten: {}, fehler: true };
+      zeichneArbeit();
+      return;
+    }
+    API['_aktion'](a[1]).then(function (e) {
+      ZUSTAND.ergebnis = e;
+      zeichneArbeit();
+    });
+  }
+
+  function neuLaden() {
+    if (!API) return;
+    API.zustand().then(function (z) {
+      zustand(z);
+      vorschauLaden();
+    });
+  }
+
+  function vorschauLaden() {
+    // pywebview materialisiert Attribute erst beim Zugriff. Darum direkt
+    // aufrufen und den Fehler abfangen - fehlt die Vorschau, zeigt die
+    // Oberflaeche eben nur den Startknopf.
+    if (!API || !GEWAHLT) return;
+    try {
+      API.vorschau(GEWAHLT).then(function (v) {
+        ZUSTAND.vorschau = v;
+        zeichneArbeit();
+      }).catch(function () {
+        ZUSTAND.vorschau = null;
+      });
+    } catch (e) {
+      ZUSTAND.vorschau = null;
+    }
+  }
+
+  function zustand(z) {
+    if (!z) return;
+    ZUSTAND.werkzeuge = z.werkzeuge || [];
+    ZUSTAND.einstellungen = z.einstellungen || {};
+
+    if (!GEWAHLT && ZUSTAND.werkzeuge.length) {
+      for (var i = 0; i < ZUSTAND.werkzeuge.length; i++) {
+        if (ZUSTAND.werkzeuge[i].an) { GEWAHLT = ZUSTAND.werkzeuge[i].id; break; }
+      }
+      if (!GEWAHLT) GEWAHLT = ZUSTAND.werkzeuge[0].id;
+    }
+
+    T = TEXTE[sprache()] || TEXTE.de;
+    document.getElementById('sprache-text').textContent =
+      sprache() === 'en' ? T.deutsch : T.english;
+    document.getElementById('ordner-pfad').textContent =
+      (ZUSTAND.einstellungen.downloads_ordner || '—');
+
+    zeichneWerkzeuge();
+    zeichneArbeit();
+  }
+
+  // ── Start ────────────────────────────────────────────────
+  function start() {
+    bereit().then(function (api) {
+      API = api;
+      if (!api) {
+        document.getElementById('arbeitsflaeche').innerHTML = '';
+        var l = el('div', 'leer', sag('nichtVerbunden'));
+        document.getElementById('arbeitsflaeche').appendChild(l);
+        return;
+      }
+      document.getElementById('btn-ordner').onclick = function () {
+        api.ordner_waehlen().then(function () { neuLaden(); });
+      };
+      document.getElementById('btn-oeffnen').onclick = function () {
+        if (api.ordner_oeffnen) api.ordner_oeffnen();
+      };
+      document.getElementById('btn-sprache').onclick = function () {
+        api.sprache_setzen(sprache() === 'de' ? 'en' : 'de').then(function (z) {
+          zustand(z);
+        });
+      };
+      document.getElementById('btn-einstellungen').onclick = function () {
+        if (api.einstellungen_oeffnen) api.einstellungen_oeffnen();
+      };
+      neuLaden();
+    });
+  }
+
+  return {
+    zustand: zustand,
+    start: start,
+    gewaehlt: function () { return GEWAHLT; }
+  };
+})();
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', scrinium.start);
+} else {
+  scrinium.start();
+}
+</script>
+
+</body>
+</html>

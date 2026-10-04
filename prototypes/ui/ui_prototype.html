@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Scrinium — UI-Prototyp</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-elev: #151b23;
+    --bg-elev2: #1c232c;
+    --border: #262d36;
+    --border-hi: #323b45;
+    --text: #e6edf3;
+    --text-dim: #9198a1;
+    --text-faint: #6b7480;
+    --accent: #58a6ff;
+    --accent-dim: #1f6feb33;
+    --ok: #3fb950;
+    --warn: #d29922;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    width: 1100px;
+    height: 720px;
+    font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;                 /* the app shell never scrolls */
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Title bar ─────────────────────────────────────── */
+  .titlebar {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-elev);
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .title { font-size: 12.5px; color: var(--text-dim); margin-left: 6px; }
+
+  /* ── Layout ─────────────────────────────────────────── */
+  .body { display: flex; height: calc(100% - 40px); }
+
+  .sidebar {
+    width: 210px;
+    border-right: 1px solid var(--border);
+    padding: 12px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .nav {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    color: var(--text-dim);
+  }
+  .nav.active {
+    background: var(--accent-dim);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .nav .ico { width: 16px; text-align: center; font-size: 13px; }
+  .nav .badge {
+    margin-left: auto;
+    background: var(--bg-elev2);
+    color: var(--text-faint);
+    font-size: 11px;
+    padding: 1px 7px;
+    border-radius: 10px;
+  }
+
+  .status {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 11px 3px 9px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+  }
+  .pulse {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--ok);
+    box-shadow: 0 0 0 3px #3fb95025;
+  }
+  .status-label { color: var(--text-dim); }
+  .status-value { font-weight: 600; font-size: 12.5px; }
+
+  .main { flex: 1; padding: 20px 24px; overflow: hidden; }
+
+  h1 { font-size: 19px; font-weight: 650; letter-spacing: -0.2px; }
+  .sub { color: var(--text-faint); font-size: 12.5px; margin-top: 3px; }
+
+  /* ── Source path ────────────────────────────────────── */
+  .pathbar {
+    margin-top: 16px;
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+  }
+  .pathbar .label { font-size: 12px; color: var(--text-faint); }
+  .pathbar .path {
+    font-family: "Cascadia Code", Consolas, monospace;
+    font-size: 12.5px; color: var(--text);
+  }
+  .chip {
+    margin-left: auto;
+    font-size: 11px;
+    padding: 2px 9px;
+    border-radius: 20px;
+    background: #3fb9501a;
+    color: var(--ok);
+    border: 1px solid #3fb95033;
+  }
+
+  /* ── Toggle row ─────────────────────────────────────── */
+  .controls { margin-top: 14px; display: flex; gap: 10px; }
+  .toggle {
+    flex: 1;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex; align-items: center; gap: 11px;
+  }
+  .switch {
+    width: 34px; height: 19px;
+    border-radius: 20px;
+    background: var(--accent);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .switch.off { background: var(--border-hi); }
+  .switch::after {
+    content: "";
+    position: absolute;
+    top: 2px; left: 17px;
+    width: 15px; height: 15px;
+    border-radius: 50%;
+    background: #fff;
+  }
+  .switch.off::after { left: 2px; }
+  .toggle-text { min-width: 0; }
+  .toggle-text b { display: block; font-size: 13px; font-weight: 600; }
+  .toggle-text span { font-size: 11.5px; color: var(--text-faint); }
+
+  /* ── Summary cards ──────────────────────────────────── */
+  .cards {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .card {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 13px 15px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: "";
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--cat);
+  }
+  .card .n { font-size: 22px; font-weight: 680; letter-spacing: -0.5px; }
+  .card .cat { font-size: 12px; color: var(--text-dim); margin-top: 1px; }
+  .card .sz { font-size: 11px; color: var(--text-faint); margin-top: 6px; }
+
+  /* ── Action row ─────────────────────────────────────── */
+  .actions { margin-top: 18px; display: flex; gap: 10px; align-items: center; }
+  .btn {
+    border: 1px solid transparent;
+    border-radius: 9px;
+    padding: 10px 18px;
+    font-size: 13.5px;
+    font-weight: 600;
+    font-family: inherit;
+  }
+  .btn-primary { background: var(--accent); color: #04121f; }
+  .btn-ghost { background: var(--bg-elev); color: var(--text-dim); border-color: var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--border-hi); }
+  .hint { font-size: 12px; color: var(--text-faint); margin-left: auto; }
+
+  /* ── Preview table ──────────────────────────────────── */
+  .preview { margin-top: 20px; }
+
+  .preview-head {
+    display: flex; align-items: baseline; margin-bottom: 9px;
+  }
+  .preview-head b { font-size: 13.5px; }
+  .preview-head span { font-size: 12px; color: var(--text-faint); margin-left: 9px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-faint);
+    padding: 0 12px 8px;
+  }
+  tbody tr {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+  }
+  tbody tr:first-child { border-radius: 10px 10px 0 0; }
+  tbody tr:last-child { border-radius: 0 0 10px 10px; }
+  tbody tr + tbody tr { border-top: none; }
+  td { padding: 9px 12px; font-size: 12.5px; }
+  td.name { font-weight: 550; }
+  td.size, th.size { text-align: right; }
+  td.size { color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  td.why { color: var(--text-faint); font-size: 11.5px; }
+
+  .tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11.5px; font-weight: 600;
+    padding: 2px 9px 2px 7px;
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--cat) 14%, transparent);
+    color: var(--cat);
+    border: 1px solid color-mix(in srgb, var(--cat) 30%, transparent);
+  }
+  .tag .dotc { width: 6px; height: 6px; border-radius: 50%; background: var(--cat); }
+
+  .skipped { opacity: 0.55; }
+  .skipped td.name { font-weight: 450; color: var(--text-dim); }
+</style>
+</head>
+<body>
+
+<div class="titlebar">
+  <div class="dot" style="background:#ff5f57"></div>
+  <div class="dot" style="background:#febc2e"></div>
+  <div class="dot" style="background:#28c840"></div>
+  <div class="title">Scrinium</div>
+</div>
+
+<div class="body">
+  <div class="sidebar">
+    <div class="nav active"><span class="ico">⇅</span> Sortieren</div>
+    <div class="nav"><span class="ico">⌗</span> Regeln <span class="badge">3</span></div>
+    <div class="nav"><span class="ico">↺</span> Verlauf <span class="badge">128</span></div>
+    <div class="nav"><span class="ico">⚙</span> Einstellungen</div>
+  </div>
+
+  <div class="main">
+    <h1>Downloads ordnen</h1>
+    <div class="sub">Prüfen, verschieben, rückgängig machen — nichts davon ist endgültig.</div>
+
+    <div class="pathbar">
+      <span class="label">Ordner</span>
+      <span class="path">C:\Users\Friedrich\Downloads</span>
+      <span class="status">
+        <span class="pulse"></span>
+        <span class="status-label">Überwachung</span>
+        <span class="status-value">Aktiv</span>
+      </span>
+      <span class="chip">gefunden</span>
+    </div>
+
+    <div class="controls">
+      <div class="toggle">
+        <div class="switch"></div>
+        <div class="toggle-text">
+          <b>Bei neuen Dateien</b>
+          <span>wartet bis der Download fertig ist</span>
+        </div>
+      </div>
+      <div class="toggle">
+        <div class="switch off"></div>
+        <div class="toggle-text">
+          <b>Intervall</b>
+          <span>alle 30 Minuten</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="card" style="--cat:#F59E0B">
+        <div class="n">14</div><div class="cat">Bilder</div>
+        <div class="sz">128,4 MB</div>
+      </div>
+      <div class="card" style="--cat:#EF4444">
+        <div class="n">3</div><div class="cat">Videos</div>
+        <div class="sz">2,1 GB</div>
+      </div>
+      <div class="card" style="--cat:#3B82F6">
+        <div class="n">9</div><div class="cat">Dokumente</div>
+        <div class="sz">46,7 MB</div>
+      </div>
+      <div class="card" style="--cat:#d29922">
+        <div class="n">2</div><div class="cat">Noch unfertig</div>
+        <div class="sz">47,5 MB · später</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary">⇅ Jetzt einsortieren</button>
+      <button class="btn btn-ghost">↺ Letzten Lauf rückgängig</button>
+      <span class="hint">28 Dateien · 2,3 GB — danach ist alles prüfbar und rückgängig machbar</span>
+    </div>
+
+    <div class="preview">
+      <div class="preview-head">
+        <b>Vorschau</b>
+        <span>so würde es laufen — es ist noch nichts passiert</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:38%">Datei</th>
+            <th style="width:20%">Kategorie</th>
+            <th style="width:18%">Wird gelegt nach</th>
+            <th class="size" style="width:12%">Größe</th>
+            <th style="width:12%">Warum</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="name">6184b4bb-c849-4a11-98c9-90e4258436fb.ico</td>
+            <td><span class="tag" style="--cat:#F59E0B"><span class="dotc"></span>Bilder</span></td>
+            <td style="color:var(--text-dim)">Bilder\</td>
+            <td class="size">24,2 KB</td>
+            <td class="why">Endung *.ico</td>
+          </tr>
+          <tr>
+            <td class="name">Doku_Handbuch_final_v3.pdf</td>
+            <td><span class="tag" style="--cat:#3B82F6"><span class="dotc"></span>Dokumente</span></td>
+            <td style="color:var(--text-dim)">Dokumente\</td>
+            <td class="size">4,1 MB</td>
+            <td class="why">Endung *.pdf</td>
+          </tr>
+          <tr>
+            <td class="name">vorlesung_mitschrift.mp4</td>
+            <td><span class="tag" style="--cat:#EF4444"><span class="dotc"></span>Videos</span></td>
+            <td style="color:var(--text-dim)">Videos\</td>
+            <td class="size">1,1 GB</td>
+            <td class="why">Endung *.mp4</td>
+          </tr>
+          <tr>
+            <td class="name">Screenshot 2026-10-04.png</td>
+            <td><span class="tag" style="--cat:#F59E0B"><span class="dotc"></span>Bilder</span></td>
+            <td style="color:var(--text-dim)">Bilder\</td>
+            <td class="size">812 KB</td>
+            <td class="why">Name enthält „Screenshot"</td>
+          </tr>
+          <tr class="skipped">
+            <td class="name">film_stellen_schneiden.mp4.crdownload</td>
+            <td><span class="tag" style="--cat:#d29922"><span class="dotc"></span>wartet</span></td>
+            <td style="color:var(--text-faint)">—</td>
+            <td class="size">47,3 MB</td>
+            <td class="why">Download läuft noch</td>
+          </tr>
+          <tr class="skipped">
+            <td class="name">~$budget_2026.xlsx</td>
+            <td><span class="tag" style="--cat:#d29922"><span class="dotc"></span>wartet</span></td>
+            <td style="color:var(--text-faint)">—</td>
+            <td class="size">165 KB</td>
+            <td class="why">in Excel geöffnet</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

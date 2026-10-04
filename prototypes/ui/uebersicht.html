@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Scrinium — drei Entwuerfe</title>
+<style>
+  body { margin:0; background:#555; font-family:Inter,system-ui,sans-serif; }
+  figure { margin:0 0 30px; background:#333; padding:14px; }
+  figcaption { color:#fff; font:600 16px/1.6 Inter,sans-serif; padding:8px 4px; }
+  figcaption b { color:#8f8; }
+  img { width:1120px; height:760px; display:block; }
+  /* Vorschau verkleinert, damit alle drei auf einen Blick passen */
+  .shot { width:1120px; height:760px; overflow:hidden; position:relative; }
+  .shot iframe { width:1120px; height:760px; border:0; transform:scale(.62); transform-origin:0 0; }
+</style>
+</head>
+<body>
+
+<figure>
+  <figcaption>A · <b>Ruhig</b> — Leiste links, helles Material, ein großer Aufruf. Viel Weißraum, klarste Hierarchie.</figcaption>
+  <div class="shot"><iframe src="variant_a_ruhig.html" scrolling="no"></iframe></div>
+</figure>
+
+<figure>
+  <figcaption>B · <b>Karten</b> — dunkel, Karten links, Aktion + Dateivorschau rechts. Am grafischsten, am dichtesten.</figcaption>
+  <div class="shot"><iframe src="variant_b_karten.html" scrolling="no"></iframe></div>
+</figure>
+
+<figure>
+  <figcaption>C · <b>Schritte</b> — hell, nummerierte Schritte 1→2, sehr viel Text. Am ruhigsten, am einfachsten erklärbar.</figcaption>
+  <div class="shot"><iframe src="variant_c_schritte.html" scrolling="no"></iframe></div>
+</figure>
+
+</body>
+</html>

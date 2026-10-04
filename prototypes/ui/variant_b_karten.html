@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Scrinium — Prototyp B · Karten</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+  :root {
+    --bg:        #14161C;
+    --bg-2:      #1B1E26;
+    --surface:   #22262F;
+    --surface-2: #2A2F3A;
+    --on:        #F2F5F9;
+    --on-2:      #A8B0BF;
+    --on-3:      #6E7684;
+
+    --accent:      #7C6CFF;
+    --accent-2:    #9D8BFF;
+    --accent-soft: #7C6CFF26;
+    --green:  #34D399;
+    --green-soft: #34D39922;
+    --amber:  #FBBF24;
+
+    --r-lg: 20px;
+    --r-md: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+
+  body {
+    font-family: Inter, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--on);
+    overflow: hidden;
+    font-size: 17px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .sym { font-family: "Material Symbols Rounded"; font-weight: normal; font-style: normal;
+         font-size: 24px; line-height: 1; display: inline-block; white-space: nowrap;
+         letter-spacing: normal; text-transform: none; -webkit-font-feature-settings: 'liga'; }
+
+  .win { width: 1120px; height: 760px; background: var(--bg);
+         display: flex; flex-direction: column; }
+
+  /* ── Kopf ─────────────────────────────────────────────────── */
+  .top {
+    padding: 26px 32px 20px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .mark {
+    width: 52px; height: 52px; border-radius: var(--r-md);
+    background: linear-gradient(135deg, var(--accent), #4F46E5);
+    display: grid; place-items: center; color: #fff;
+    box-shadow: 0 6px 20px -6px var(--accent);
+  }
+  .mark .sym { font-size: 30px; }
+  .h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.4px; }
+  .sub { font-size: 15px; color: var(--on-2); margin-top: 2px; }
+  .top-spacer { flex: 1; }
+  .ghost {
+    min-height: 48px; padding: 0 18px; border-radius: var(--r-md);
+    border: 1px solid var(--surface-2); background: var(--bg-2);
+    color: var(--on); font-family: inherit; font-size: 15px; font-weight: 500;
+    display: flex; align-items: center; gap: 9px; cursor: pointer;
+  }
+  .ghost:hover { background: var(--surface); }
+
+  /* ── Karten-Raster (Hauptteil) ─────────────────────────────── */
+  .main { flex: 1; padding: 4px 32px 32px; display: flex; gap: 28px; min-height: 0; }
+
+  .col-left { flex: 1.15; min-width: 0; overflow-y: auto; padding-right: 4px; }
+
+  .sec-label {
+    font-size: 13px; font-weight: 700; color: var(--on-3);
+    text-transform: uppercase; letter-spacing: 1px; margin: 8px 0 14px;
+  }
+
+  .cards { display: flex; flex-direction: column; gap: 14px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--surface-2);
+    border-radius: var(--r-lg);
+    padding: 22px 24px;
+    display: flex; align-items: center; gap: 20px;
+    transition: border-color .15s, transform .15s;
+  }
+  .card.sel {
+    border-color: var(--accent);
+    background: linear-gradient(180deg, var(--accent-soft), transparent 70%), var(--surface);
+  }
+
+  .c-icon {
+    width: 64px; height: 64px; border-radius: var(--r-md);
+    display: grid; place-items: center; flex-shrink: 0;
+    background: var(--surface-2); color: var(--on-2);
+  }
+  .c-icon.on { background: var(--accent-soft); color: var(--accent-2); }
+  .c-icon .sym { font-size: 34px; }
+
+  .c-txt { min-width: 0; flex: 1; }
+  .c-name { font-size: 20px; font-weight: 650; letter-spacing: -0.2px; }
+  .c-desc { font-size: 15px; color: var(--on-2); margin-top: 4px; line-height: 1.45; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    margin-top: 10px; padding: 4px 12px 4px 9px;
+    border-radius: 999px; font-size: 13.5px; font-weight: 600;
+    background: var(--surface-2); color: var(--on-2);
+  }
+  .pill.ok { background: var(--green-soft); color: var(--green); }
+  .pill .sym { font-size: 17px; }
+
+  .go {
+    width: 56px; height: 56px; flex-shrink: 0;
+    border: none; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    display: grid; place-items: center; cursor: pointer;
+  }
+  .go:hover { background: var(--accent-2); }
+  .go .sym { font-size: 28px; }
+  .go { width: auto; height: auto; min-height: 56px; padding: 0 20px; gap: 9px;
+        border-radius: var(--r-md); font-family: inherit; font-size: 16px;
+        font-weight: 650; }
+  .go-txt { color: #fff; }
+
+  .dim { opacity: .42; }
+
+  /* ── Rechte Spalte: Aktion ────────────────────────────────── */
+  .col-right {
+    width: 400px; flex-shrink: 0;
+    background: var(--bg-2);
+    border: 1px solid var(--surface-2);
+    border-radius: var(--r-lg);
+    padding: 28px 26px;
+    display: flex; flex-direction: column;
+  }
+  .r-title { font-size: 22px; font-weight: 650; letter-spacing: -0.2px; }
+  .r-desc { font-size: 15px; color: var(--on-2); margin-top: 6px; line-height: 1.5; }
+
+  /* Grafik: was wird wohin verschoben */
+  .viz {
+    margin: 24px 0;
+    background: var(--surface);
+    border-radius: var(--r-md);
+    padding: 20px 18px;
+  }
+  .viz-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
+  .vz { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center;
+        font-size: 15px; font-weight: 700; color: #0C0D10; flex-shrink: 0; }
+  .vname { font-size: 14.5px; color: var(--on-2); flex: 1;
+           white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .arrow { color: var(--on-3); }
+  .vtarget { font-size: 14.5px; font-weight: 600; color: var(--on); }
+
+  .action {
+    min-height: 76px; width: 100%;
+    border: none; border-radius: var(--r-md);
+    background: linear-gradient(135deg, var(--accent), #5B4BEA);
+    color: #fff; font-family: inherit; font-size: 20px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    cursor: pointer; margin-top: auto;
+    box-shadow: 0 10px 30px -12px var(--accent);
+  }
+  .action:hover { filter: brightness(1.08); }
+  .action .sym { font-size: 28px; }
+
+  .done {
+    margin-top: 18px; padding: 16px 18px;
+    background: var(--green-soft); border-radius: var(--r-md);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .done .sym { color: var(--green); font-size: 26px; }
+  .done-t { font-size: 16px; font-weight: 650; color: var(--green); }
+  .done-s { font-size: 13.5px; color: var(--on-2); margin-top: 2px; }
+  .done button {
+    margin-left: auto; min-height: 44px; padding: 0 16px;
+    border: 1px solid var(--green); border-radius: 10px;
+    background: transparent; color: var(--green);
+    font-family: inherit; font-size: 14.5px; font-weight: 600; cursor: pointer;
+  }
+
+  .foot-note {
+    margin-top: 16px; font-size: 13.5px; color: var(--on-3); line-height: 1.5;
+    display: flex; gap: 8px; align-items: flex-start;
+  }
+</style>
+</head>
+<body>
+
+<div class="win">
+  <div class="top">
+    <div class="mark"><span class="sym">auto_awesome</span></div>
+    <div>
+      <div class="h1">Scrinium</div>
+      <div class="sub">Ein Werkzeug. Ein Klick. Fertig.</div>
+    </div>
+    <div class="top-spacer"></div>
+    <button class="ghost"><span class="sym">language</span><span>Deutsch</span> Deutsch</button>
+    <button class="ghost"><span class="sym">dark_mode</span><span>Dunkel</span></button>
+    <button class="ghost"><span class="sym">settings</span><span>Mehr</span></button>
+  </div>
+
+  <div class="main">
+
+    <!-- Karten -->
+    <div class="col-left">
+      <div class="sec-label">Deine Werkzeuge</div>
+      <div class="cards">
+
+        <div class="card sel">
+          <div class="c-icon on"><span class="sym">sort</span></div>
+          <div class="c-txt">
+            <div class="c-name">Downloads-Sortierer</div>
+            <div class="c-desc">Ordnet fertige Dateien automatisch in passende Ordner.</div>
+            <div class="pill ok"><span class="sym">check_circle</span> bereit</div>
+          </div>
+          <button class="go"><span class="sym">arrow_forward</span><span class="go-txt">Starten</span></button>
+        </div>
+
+        <div class="card dim">
+          <div class="c-icon"><span class="sym">content_copy</span></div>
+          <div class="c-txt">
+            <div class="c-name">Duplikate finden</div>
+            <div class="c-desc">Findet gleiche Dateien und räumt sie auf.</div>
+            <div class="pill"><span class="sym">download</span> noch nicht da — kommt beim Update</div>
+          </div>
+          <button class="go"><span class="sym">lock</span><span class="go-txt">gesperrt</span></button>
+        </div>
+
+        <div class="card dim">
+          <div class="c-icon"><span class="sym">image_search</span></div>
+          <div class="c-txt">
+            <div class="c-name">Bilder durchsuchen</div>
+            <div class="c-desc">Findet ähnliche Bilder und benennt Screenshots.</div>
+            <div class="pill"><span class="sym">download</span> noch nicht da — kommt beim Update</div>
+          </div>
+          <button class="go"><span class="sym">lock</span><span class="go-txt">gesperrt</span></button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Aktion -->
+    <div class="col-right">
+      <div class="r-title">Downloads-Sortierer</div>
+      <div class="r-desc">Diese Dateien werden verschoben:</div>
+
+      <div class="viz">
+        <div class="viz-row">
+          <div class="vz" style="background:#FBBF24">PDF</div>
+          <span class="vname">Handbuch_final.pdf</span>
+          <span class="arrow sym">arrow_forward</span>
+          <span class="vtarget">Dokumente</span>
+        </div>
+        <div class="viz-row">
+          <div class="vz" style="background:#34D399">JPG</div>
+          <span class="vname">urlaub.jpg</span>
+          <span class="arrow sym">arrow_forward</span>
+          <span class="vtarget">Bilder</span>
+        </div>
+        <div class="viz-row">
+          <div class="vz" style="background:#7C6CFF">MP4</div>
+          <span class="vname">vorlesung.mp4</span>
+          <span class="arrow sym">arrow_forward</span>
+          <span class="vtarget">Videos</span>
+        </div>
+        <div class="viz-row">
+          <div class="vz" style="background:#6E7684">?</div>
+          <span class="vname">datei.xyz</span>
+          <span class="arrow sym">arrow_forward</span>
+          <span class="vtarget" style="color:var(--on-3)">bleibt liegen</span>
+        </div>
+      </div>
+
+      <button class="action"><span class="sym">sort</span> 3 Dateien sortieren</button>
+
+      <div class="done">
+        <span class="sym">check_circle</span>
+        <div>
+          <div class="done-t">3 Dateien einsortiert</div>
+          <div class="done-s">128 MB · nichts überschrieben</div>
+        </div>
+        <button>Rückgängig</button>
+      </div>
+
+      <div class="foot-note">
+        <span class="sym">info</span>
+        <span>Halbe Downloads werden nie angefasst. Alles ist rückgängig machbar.</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Scrinium — Prototyp A · ruhig</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  /* ── Material 3 Tokens ─────────────────────────────────── */
+  :root {
+    --primary: #2A6C4F;
+    --on-primary: #FFFFFF;
+    --primary-container: #B8F2D4;
+    --on-primary-container: #00210F;
+
+    --surface: #F6FBF5;
+    --surface-1: #EFF5EE;
+    --surface-2: #E6ECE5;
+    --on-surface: #171D19;
+    --on-surface-var: #414942;
+    --on-surface-dim: #717972;
+
+    --outline: #717972;
+    --outline-var: #C1C9C1;
+
+    --error: #BA1A1A;
+    --success: #2A6C4F;
+
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 16px;
+    --r-full: 999px;
+
+    --elev-1: 0 1px 2px rgba(0,0,0,.06), 0 1px 3px 1px rgba(0,0,0,.10);
+    --elev-2: 0 1px 2px rgba(0,0,0,.06), 0 2px 6px 2px rgba(0,0,0,.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Inter, "Segoe UI", system-ui, sans-serif;
+    background: #E8EDE7;
+    color: var(--on-surface);
+    width: 1120px;
+    height: 760px;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    font-size: 17px;                 /* Grundgroesse: gross */
+  }
+
+  .sym { font-family: "Material Symbols Rounded"; font-weight: normal; font-style: normal;
+         font-size: 24px; line-height: 1; letter-spacing: normal; text-transform: none;
+         display: inline-block; white-space: nowrap; direction: ltr; -webkit-font-feature-settings: 'liga';
+         -webkit-font-smoothing: antialiased; }
+
+  /* ── Fenster ──────────────────────────────────────────────── */
+  .win {
+    width: 1120px; height: 760px;
+    background: var(--surface);
+    display: flex; flex-direction: column;
+  }
+
+  .topbar {
+    height: 68px;
+    display: flex; align-items: center; gap: 14px;
+    padding: 0 24px;
+    background: var(--surface-1);
+    border-bottom: 1px solid var(--outline-var);
+  }
+  .logo {
+    width: 44px; height: 44px; border-radius: var(--r-md);
+    background: var(--primary);
+    color: var(--on-primary);
+    display: grid; place-items: center;
+  }
+  .logo .sym { font-size: 26px; }
+  .brand { font-size: 21px; font-weight: 600; letter-spacing: -0.2px; }
+  .brand-sub { font-size: 14px; color: var(--on-surface-dim); margin-top: 1px; }
+  .topbar-spacer { flex: 1; }
+
+  .icon-btn {
+    width: 48px; height: 48px;
+    border: none; background: transparent;
+    border-radius: var(--r-full);
+    color: var(--on-surface-var);
+    display: grid; place-items: center;
+    cursor: pointer;
+  }
+  .icon-btn:hover { background: var(--surface-2); }
+  .btn-txt { font-size: 15px; font-weight: 500; }
+  .icon-btn { width: auto; padding: 0 16px; gap: 8px; border-radius: var(--r-full);
+               display: inline-flex; align-items: center; }
+
+  /* ── Body: Leiste + Details ───────────────────────────────── */
+  .body { flex: 1; display: flex; min-height: 0; }
+
+  .rail {
+    width: 280px; flex-shrink: 0;
+    background: var(--surface-1);
+    border-right: 1px solid var(--outline-var);
+    display: flex; flex-direction: column;
+  }
+  .rail-head { padding: 22px 20px 12px; }
+  .rail-title { font-size: 14px; font-weight: 600; color: var(--on-surface-dim);
+                text-transform: uppercase; letter-spacing: 0.8px; }
+
+  .rail-list { padding: 0 12px; display: flex; flex-direction: column; gap: 6px; }
+
+  .tool {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px;
+    border-radius: var(--r-md);
+    border: none; background: transparent;
+    cursor: pointer; text-align: left;
+    font-family: inherit; font-size: 17px;
+    color: var(--on-surface-var);
+    min-height: 64px;
+  }
+  .tool .sym { font-size: 26px; }
+  .tool-txt { min-width: 0; flex: 1; }
+  .tool-name { font-weight: 600; font-size: 17px; color: var(--on-surface);
+               white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tool-state { font-size: 14px; color: var(--on-surface-dim); margin-top: 2px; }
+
+  .tool.on { background: var(--primary-container); color: var(--on-primary-container); }
+  .tool.on .tool-name { color: var(--on-primary-container); }
+  .tool.on .tool-state { color: var(--on-primary-container); opacity: .8; }
+  .tool.on .sym { color: var(--primary); }
+
+  .tool.off { opacity: .55; }
+
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
+  .status-dot.off { background: var(--outline); }
+
+  .rail-foot { margin-top: auto; padding: 16px 20px 20px; }
+  .rail-note {
+    background: var(--surface-2);
+    border-radius: var(--r-md);
+    padding: 14px 16px;
+    font-size: 14px;
+    color: var(--on-surface-dim);
+    line-height: 1.5;
+  }
+  .rail-note b { color: var(--on-surface-var); display: block; margin-bottom: 4px; font-size: 14px; }
+
+  /* ── Detailbereich ───────────────────────────────────────── */
+  .detail { flex: 1; padding: 32px 40px; overflow-y: auto; min-width: 0; }
+
+  .d-head { display: flex; align-items: flex-start; gap: 18px; margin-bottom: 6px; }
+  .d-icon {
+    width: 60px; height: 60px; border-radius: var(--r-lg);
+    background: var(--primary-container); color: var(--primary);
+    display: grid; place-items: center; flex-shrink: 0;
+  }
+  .d-icon .sym { font-size: 32px; }
+  .d-title { font-size: 30px; font-weight: 600; letter-spacing: -0.4px; }
+  .d-sub { font-size: 16px; color: var(--on-surface-dim); margin-top: 4px; }
+
+  /* Infozeile */
+  .info {
+    margin: 26px 0 30px;
+    background: var(--surface-1);
+    border: 1px solid var(--outline-var);
+    border-radius: var(--r-lg);
+    padding: 18px 22px;
+    display: flex; align-items: center; gap: 18px;
+  }
+  .info .sym { color: var(--on-surface-dim); }
+  .info-lbl { font-size: 15px; color: var(--on-surface-dim); }
+  .info-val { font-size: 17px; font-weight: 500; margin-top: 2px; }
+
+  /* Der eine grosse Knopf */
+  .big-btn {
+    width: 100%;
+    min-height: 84px;
+    border: none; border-radius: var(--r-lg);
+    background: var(--primary); color: var(--on-primary);
+    font-family: inherit; font-size: 22px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center; gap: 14px;
+    cursor: pointer;
+    box-shadow: var(--elev-1);
+  }
+  .big-btn:hover { box-shadow: var(--elev-2); }
+  .big-btn .sym { font-size: 32px; }
+
+  .secondary-row { margin-top: 16px; display: flex; gap: 12px; }
+  .sec-btn {
+    min-height: 56px; padding: 0 22px;
+    border: 1px solid var(--outline); border-radius: var(--r-md);
+    background: transparent; color: var(--on-surface);
+    font-family: inherit; font-size: 16px; font-weight: 500;
+    display: flex; align-items: center; gap: 10px; cursor: pointer;
+  }
+  .sec-btn:hover { background: var(--surface-2); }
+  .sec-btn[disabled] { opacity: .4; cursor: default; }
+
+  /* Ergebnis */
+  .result {
+    margin-top: 26px;
+    border-radius: var(--r-lg);
+    padding: 20px 24px;
+    display: flex; align-items: center; gap: 16px;
+    background: var(--primary-container);
+    color: var(--on-primary-container);
+  }
+  .result .sym { color: var(--primary); }
+  .result-txt { font-size: 19px; font-weight: 600; }
+  .result-sub { font-size: 15px; opacity: .8; margin-top: 3px; }
+  .result .undo {
+    margin-left: auto;
+    min-height: 52px; padding: 0 20px;
+    border: 1px solid var(--primary); border-radius: var(--r-md);
+    background: transparent; color: var(--on-primary-container);
+    font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="win">
+
+  <div class="topbar">
+    <div class="logo"><span class="sym">sort</span></div>
+    <div>
+      <div class="brand">Scrinium</div>
+      <div class="brand-sub">Deine Dateien ordnen sich selbst</div>
+    </div>
+    <div class="topbar-spacer"></div>
+    <button class="icon-btn" title="Sprache"><span class="sym">language</span><span class="btn-txt">Sprache</span></button>
+    <button class="icon-btn" title="Einstellungen"><span class="sym">settings</span><span class="btn-txt">Einstellungen</span></button>
+  </div>
+
+  <div class="body">
+
+    <!-- Leiste -->
+    <div class="rail">
+      <div class="rail-head"><div class="rail-title">Meine Werkzeuge</div></div>
+
+      <div class="rail-list">
+        <button class="tool on">
+          <span class="sym">sort</span>
+          <span class="tool-txt">
+            <span class="tool-name">Downloads-Sortierer</span>
+            <span class="tool-state">bereit</span>
+          </span>
+          <span class="status-dot"></span>
+        </button>
+
+        <button class="tool off">
+          <span class="sym">content_copy</span>
+          <span class="tool-txt">
+            <span class="tool-name">Duplikate finden</span>
+            <span class="tool-state">nicht installiert</span>
+          </span>
+          <span class="status-dot off"></span>
+        </button>
+
+        <button class="tool off">
+          <span class="sym">image_search</span>
+          <span class="tool-txt">
+            <span class="tool-name">Bilder durchsuchen</span>
+            <span class="tool-state">nicht installiert</span>
+          </span>
+          <span class="status-dot off"></span>
+        </button>
+      </div>
+
+      <div class="rail-foot">
+        <div class="rail-note">
+          <b>Werkzeuge nachrüsten</b>
+          Neue Werkzeuge kommen automatisch beim Update.
+        </div>
+      </div>
+    </div>
+
+    <!-- Details -->
+    <div class="detail">
+      <div class="d-head">
+        <div class="d-icon"><span class="sym">sort</span></div>
+        <div>
+          <div class="d-title">Downloads-Sortierer</div>
+          <div class="d-sub">Ordnet fertige Dateien in passende Ordner</div>
+        </div>
+      </div>
+
+      <div class="info">
+        <span class="sym">folder_open</span>
+        <div>
+          <div class="info-lbl">Downloads-Ordner</div>
+          <div class="info-val">C:\Users\Friedrich\Downloads</div>
+        </div>
+        <button class="sec-btn" style="margin-left:auto">
+          <span class="sym">folder</span> Ordner wählen
+        </button>
+      </div>
+
+      <button class="big-btn">
+        <span class="sym">sort</span>
+        Jetzt sortieren
+      </button>
+
+      <div class="secondary-row">
+        <button class="sec-btn"><span class="sym">folder_open</span> Ordner öffnen</button>
+        <button class="sec-btn"><span class="sym">history</span> Verlauf ansehen</button>
+      </div>
+
+      <div class="result">
+        <span class="sym">check_circle</span>
+        <div>
+          <div class="result-txt">14 Dateien einsortiert</div>
+          <div class="result-sub">128 MB · 2 noch unfertig</div>
+        </div>
+        <button class="undo">Rückgängig</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

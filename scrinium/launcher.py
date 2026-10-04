@@ -1,7 +1,8 @@
-"""Scrinium launcher.
+"""Scrinium-Einstieg.
 
-Kept as a tiny shim so `main.pyw` (no console window on Windows) and the
-packaged exe share one entry point. The real GUI lives in ``scrinium/ui``.
+Aufruf ohne Argumente oeffnet das Fenster. Mit Argumenten laeuft die
+Kommandozeile (`--sortieren`, `--undo`, `--pruefen` usw.) - so bleibt
+alles auch ohne Fenster bedienbar.
 """
 
 from __future__ import annotations
@@ -10,15 +11,14 @@ import sys
 
 
 def main() -> int:
-    # `python main.pyw --dry-run` behaves like the CLI - handy for testing.
     if len(sys.argv) > 1:
         from scrinium.cli import run_cli
 
         return run_cli(sys.argv[1:])
-    from scrinium.ui.app import run
 
-    run()
-    return 0
+    from scrinium.fenster import starten
+
+    return starten()
 
 
 if __name__ == "__main__":

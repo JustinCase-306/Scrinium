@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Scrinium — Vollentwurf</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400;8..144,500;8..144,600;8..144,700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap">
+<style>
+  /* ── Tokens: die dunkle Palette aus Stitch ────────────────── */
+  :root {
+    --bg:          #141218;
+    --surface:     #1c1b1f;
+    --surface-2:   #201f24;
+    --surface-3:   #2b2930;
+    --surface-4:   #35343a;
+
+    --on:          #e6e1e5;
+    --on-2:        #cac4d0;
+    --on-3:        #938f99;
+    --on-4:        #a5a0ab;
+
+    --primary:      #a8c7fa;
+    --on-primary:   #0b3d75;
+    --primary-sub:  #d3e3fd;
+
+    --green:       #a6f0b4;
+    --on-green:    #0f5223;
+    --green-2:     #7dd6a0;
+
+    --danger:      #ffb4ab;
+    --on-danger:   #690005;
+
+    --outline:     #49454f;
+    --outline-2:   #938f99;
+
+    --r-sm: 8px;
+    --r:    14px;
+    --r-lg: 16px;
+    --r-xl: 20px;
+    --r-full: 999px;
+
+    --elev-1: 0 2px 6px rgba(0,0,0,.45);
+    --elev-2: 0 6px 16px rgba(0,0,0,.55);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+
+  body {
+    font-family: "Roboto Flex", "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--on);
+    overflow: hidden;
+    font-size: 18px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    color-scheme: dark;          /* native Scrollbalken werden dunkel */
+  }
+
+  /* ── Scrollbalken ─────────────────────────────────────────────
+     WebView2 zeichnet sonst die helle Windows-Standardleiste. Drei
+     Stufen: color-scheme (oben) fuer die native Leiste, dann
+     ::-webkit-scrollbar fuer Chromium. */
+  ::-webkit-scrollbar { width: 16px; height: 16px; }
+  ::-webkit-scrollbar-track {
+    background: var(--surface);
+    border-left: 1px solid var(--outline);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--surface-4);
+    border: 4px solid var(--surface);
+    border-radius: var(--r-full);
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--on-4); }
+  ::-webkit-scrollbar-thumb:active { background: var(--on-3); }
+  ::-webkit-scrollbar-corner { background: var(--surface); }
+  /* Firefox */
+  .work, .rail, .side { scrollbar-width: thin; scrollbar-color: var(--surface-4) var(--surface); }
+
+  .sym { font-family: "Material Symbols Rounded"; font-weight: normal; font-style: normal;
+         font-size: 24px; line-height: 1; display: inline-block; white-space: nowrap;
+         letter-spacing: normal; text-transform: none; -webkit-font-feature-settings: 'liga'; }
+
+  /* Das Fenster fuellt seine Umgebung. min-width/min-height setzen die
+     Untergrenze fuer die Bedienbarkeit - darunter waere eine Dateiliste
+     unlesbar, also scrollt statt zu brechen. */
+  .win {
+    width: 100%;
+    height: 100vh;
+    min-width: 900px;
+    min-height: 620px;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Kopf ─────────────────────────────────────────────────── */
+  .top {
+    min-height: 84px; flex-shrink: 0;
+    display: flex; align-items: center; gap: 18px;
+    padding: 0 1.35rem;
+    background: var(--surface);
+  }
+  .mark {
+    width: 52px; height: 52px; border-radius: var(--r);
+    background: var(--primary); color: var(--on-primary);
+    display: grid; place-items: center; flex-shrink: 0;
+  }
+  .mark .sym { font-size: 30px; }
+  .brand { font-size: 26px; font-weight: 700; letter-spacing: -0.3px; }
+
+  .top-spacer { flex: 1; }
+
+  .btn-top {
+    min-height: 56px; padding: 0 26px;
+    border-radius: var(--r-full);
+    background: var(--surface-3);
+    border: 1px solid var(--outline);
+    color: var(--on); font-family: inherit; font-size: 18px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 10px; cursor: pointer;
+  }
+  .btn-top:hover { background: var(--surface-4); }
+
+  .win-btns { display: flex; gap: 4px; margin-left: 14px; }
+  .win-btn {
+    width: 48px; height: 48px; border-radius: var(--r-sm);
+    border: none; background: transparent; color: var(--on-2);
+    display: grid; place-items: center; cursor: pointer;
+  }
+  .win-btn:hover { background: var(--surface-3); }
+
+  /* ── Drei Spalten ─────────────────────────────────────────── */
+  .body { flex: 1; display: flex; min-height: 0; }
+
+  /* 1) Werkzeugleiste */
+  .rail {
+    width: 300px; flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--outline);
+    padding: 1.5rem 1rem;
+    display: flex; flex-direction: column;
+  }
+  .rail-h {
+    font-size: 15px; font-weight: 700; color: var(--on-3);
+    text-transform: uppercase; letter-spacing: 1.2px;
+    padding: 0 12px 18px;
+  }
+  .tool {
+    display: flex; align-items: flex-start; gap: 14px;
+    width: 100%; min-height: 76px;
+    padding: 16px 14px;
+    border: none; border-radius: var(--r-xl); background: transparent;
+    color: var(--on-2); font-family: inherit; font-size: 19px;
+    text-align: left; cursor: pointer;
+  }
+  .tool .sym { font-size: 28px; color: var(--on-3); flex-shrink: 0; margin-top: 2px; }
+  .tool-t { min-width: 0; flex: 1; }
+  /* span ist inline - ohne display:block greift weder min-width noch
+     der Umbruch, und der Name laeuft ueber den Kachelrand. */
+  .tool-name {
+    display: block;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-weight: 600; color: var(--on-2); line-height: 1.3;
+  }
+  .tool.on { background: var(--surface-3); }
+  .tool.on .sym { color: var(--primary); }
+  .tool.on .tool-name { color: var(--on); }
+
+  .state {
+    display: inline-flex; align-items: center; gap: 8px;
+    max-width: 100%;
+    margin-top: 8px; padding: 4px 14px 4px 10px;
+    border-radius: var(--r-full); font-size: 15px; font-weight: 600;
+    border: 1px solid var(--outline);
+    background: var(--surface-4); color: var(--on-3);
+  }
+  .state.ok { background: color-mix(in srgb, var(--green) 18%, transparent); color: var(--green); }
+  .state .sym { font-size: 18px; }
+  .state .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green-2); }
+
+  .rail-f {
+    margin-top: auto; padding: 18px 12px 0;
+    border-top: 1px solid var(--outline);
+    font-size: 15px; color: var(--on-3); line-height: 1.55;
+  }
+  .rail-f b { display: block; color: var(--on-2); font-size: 16px; margin-bottom: 5px; font-weight: 600; }
+
+  /* 2) Arbeitsflaeche */
+  .work { flex: 1; min-width: 0; padding: 2rem 2.1rem; overflow-y: auto; }
+
+  .w-title { font-size: 34px; font-weight: 700; letter-spacing: -0.5px; }
+  .w-sub { font-size: 18px; color: var(--on-2); margin-top: 8px; }
+
+  /* Der eine Aufruf */
+  .cta {
+    margin-top: 30px; width: 100%; min-height: 88px;
+    border: none; border-radius: var(--r-full);
+    background: var(--primary); color: var(--on-primary);
+    font-family: inherit; font-size: 22px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; gap: 14px;
+    cursor: pointer;
+  }
+  .cta:hover { background: var(--primary-sub); }
+  .cta .sym { font-size: 30px; }
+  .cta-note { margin-top: 12px; text-align: center; font-size: 15px; color: var(--on-3); }
+
+  /* Dateiliste */
+  .files { margin-top: 30px; }
+  .files-h {
+    display: flex; align-items: baseline; margin-bottom: 14px;
+    font-size: 17px; color: var(--on-3); font-weight: 500;
+  }
+  .files-h b { font-size: 19px; color: var(--on-2); font-weight: 600; margin-right: 10px; }
+
+  .file {
+    display: flex; align-items: center; gap: 16px;
+    min-height: 72px; padding: 14px 20px;
+    background: var(--surface);
+    border: 1px solid var(--outline);
+    border-radius: var(--r);
+    /* Unter 760px wird die Dateizeile zweizeilig: der Zielordner
+       rutscht unter den Namen, statt die Zeile zu sprengen. */
+    flex-wrap: wrap;
+  }
+  @media (max-width: 1000px) {
+    .file { gap: 10px 16px; }
+    .f-ico { width: 40px; height: 40px; }
+    .f-name { flex: 1 1 200px; }
+    .f-to { flex: 0 0 auto; }
+    .f-sz { width: auto; margin-left: auto; }
+  }
+  .file + .file { margin-top: 10px; }
+
+  .f-ico {
+    width: 46px; height: 46px; border-radius: var(--r-sm);
+    display: grid; place-items: center; flex-shrink: 0;
+    font-size: 14px; font-weight: 700; letter-spacing: .3px;
+  }
+  .f-name { font-size: 19px; font-weight: 500; flex: 1; min-width: 0;
+           white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .f-to {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-size: 17px; font-weight: 600; color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary) 45%, transparent);
+    padding: 8px 18px; border-radius: var(--r-full); white-space: nowrap;
+    flex: 0 0 auto;
+  }
+  .f-to .sym { font-size: 18px; flex-shrink: 0; }
+  .f-sz { font-size: 16px; color: var(--on-3); width: 92px; text-align: right; }
+
+  .file.wait { opacity: .72; }
+  .f-to.stay { color: var(--on-3); background: var(--surface-3);
+              border-color: var(--outline-2); }
+
+  /* Ergebnis */
+  .done {
+    margin-top: 26px; padding: 20px 24px;
+    border-radius: var(--r-lg);
+    background: color-mix(in srgb, var(--green) 12%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--green) 40%, transparent);
+    display: flex; align-items: center; gap: 18px;
+    flex-wrap: wrap;
+  }
+  .done .sym { color: var(--green); font-size: 34px; flex-shrink: 0; }
+  /* Der Textblock gibt nach, der Knopf nicht - sonst schiebt er ihn raus. */
+  .done > div { min-width: 0; flex: 1 1 200px; }
+  .done-t { font-size: 21px; font-weight: 700; color: var(--green); }
+  .done-s { font-size: 16px; color: var(--on-2); margin-top: 4px; }
+  .btn-sec {
+    margin-left: auto; min-height: 56px; padding: 0 26px;
+    border-radius: var(--r-full); border: 1px solid var(--outline-2);
+    background: transparent; color: var(--on);
+    font-family: inherit; font-size: 17px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 10px; cursor: pointer;
+    flex-shrink: 0;
+  }
+  .btn-sec:hover { background: var(--surface-3); }
+
+  /* 3) Rechte Spalte: Ordner */
+  .side {
+    width: 340px; flex-shrink: 0;
+    background: var(--surface);
+    border-left: 1px solid var(--outline);
+    padding: 2rem 1.5rem;
+    display: flex; flex-direction: column;
+  }
+  .s-h { font-size: 15px; font-weight: 700; color: var(--on-3);
+         text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 18px; }
+
+  .path {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--surface-2); border: 1px solid var(--outline);
+    border-radius: var(--r); padding: 18px 20px;
+  }
+  .path .sym { color: var(--on-3); font-size: 28px; flex-shrink: 0; }
+  .path-txt { min-width: 0; }
+  .path-lbl { font-size: 15px; color: var(--on-3); }
+  .path-val {
+    font-size: 16px; font-weight: 600; margin-top: 3px;
+    /* Umbricht statt abzuschneiden: der Pfad ist die wichtigste Angabe hier. */
+    overflow-wrap: anywhere;
+    line-height: 1.45;
+  }
+
+  .side-actions { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .btn-block {
+    width: 100%; min-height: 60px;
+    border-radius: var(--r-full); border: 1px solid var(--outline);
+    background: var(--surface-2); color: var(--on);
+    font-family: inherit; font-size: 18px; font-weight: 500;
+    display: flex; align-items: center; gap: 12px; padding: 0 20px; cursor: pointer;
+  }
+  .btn-block:hover { background: var(--surface-3); }
+  .btn-block .sym { color: var(--on-3); }
+
+  /* ── Skalierung ──────────────────────────────────────────────
+     Drei Stufen, damit Scrinium auch auf einem 1024er-Bildschirm
+     oder mit 200% DPI-Skalierung bedienbar bleibt. */
+
+  /* 3) unter 1180px: rechte Spalte wandert unter die Arbeitsflaeche */
+  @media (max-width: 1180px) {
+    .body { flex-wrap: wrap; }
+    .rail { width: 264px; }
+    .work { flex: 1 1 560px; }
+    .side {
+      width: 100%;
+      flex: 0 0 auto;
+      border-left: none;
+      border-top: 1px solid var(--outline);
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 1.5rem;
+    }
+    .s-h { flex: 1 1 100%; margin-bottom: 0; }
+    .side-actions { flex: 1 1 300px; }
+    .safety { margin-top: 0; padding-top: 0; border-top: none;
+              flex: 1 1 320px; }
+    .side .path { flex: 1 1 320px; }
+  }
+
+  /* 2) unter 1000px: Werkzeugleiste wird zur schmalen Iconleiste */
+  @media (max-width: 1000px) {
+    .rail { width: 80px; padding: 1.5rem .35rem; align-items: center; }
+    .rail-h, .rail-f, .tool-name, .state { display: none; }
+    .tool {
+      justify-content: center; align-items: center;
+      padding: 0; min-height: 56px; width: 56px;
+    }
+    .tool .sym { font-size: 28px; margin-top: 0; }
+  }
+
+  /* 1) Raster folgt der Schriftgroesse: grossere Schrift = mehr Platz */
+  @media (min-width: 1600px) {
+    .win { font-size: 19px; }
+    .rail { width: 330px; }
+    .side  { width: 380px; }
+  }
+
+  /* Sehr schmal: nur noch eine Spalte, alles stapelt sich */
+  @media (max-width: 900px) {
+    .side { flex-direction: column; }
+  }
+
+  .safety {
+    margin-top: auto; padding-top: 22px;
+    border-top: 1px solid var(--outline);
+    font-size: 16px; color: var(--on-2); line-height: 1.6;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .safety .sym { color: var(--green); font-size: 24px; flex-shrink: 0; }
+  .safety b { color: var(--on); }
+</style>
+</head>
+<body>
+
+<div class="win">
+
+  <!-- Kopf -->
+  <div class="top">
+    <div class="mark"><span class="sym">sort</span></div>
+    <div class="brand">Scrinium</div>
+    <div class="top-spacer"></div>
+
+    <button class="btn-top"><span class="sym">settings</span> Einstellungen</button>
+
+    <div class="win-btns">
+      <button class="win-btn"><span class="sym">remove</span></button>
+      <button class="win-btn"><span class="sym">crop_square</span></button>
+      <button class="win-btn"><span class="sym">close</span></button>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- 1) Werkzeuge -->
+    <div class="rail">
+      <div class="rail-h">Meine Werkzeuge</div>
+
+      <button class="tool on">
+        <span class="sym">sort</span>
+        <span class="tool-t">
+          <span class="tool-name">Downloads-Sortierer</span>
+          <span class="state ok"><span class="dot"></span> bereit</span>
+        </span>
+      </button>
+
+      <button class="tool">
+        <span class="sym">content_copy</span>
+        <span class="tool-t">
+          <span class="tool-name">Duplikate finden</span>
+          <span class="state">noch nicht da</span>
+        </span>
+      </button>
+
+      <button class="tool">
+        <span class="sym">image_search</span>
+        <span class="tool-t">
+          <span class="tool-name">Bilder durchsuchen</span>
+          <span class="state">noch nicht da</span>
+        </span>
+      </button>
+
+      <div class="rail-f">
+        <b>Werkzeuge nachrüsten</b>
+        Neue Werkzeuge kommen automatisch mit dem nächsten Update.
+      </div>
+    </div>
+
+    <!-- 2) Arbeit -->
+    <div class="work">
+      <div class="w-title">Downloads-Sortierer</div>
+      <div class="w-sub">Ordnet fertige Dateien in passende Ordner. Unfertige Downloads bleiben liegen.</div>
+
+      <button class="cta"><span class="sym">sort</span> Jetzt sortieren</button>
+      <div class="cta-note">3 Dateien werden verschoben · 128 MB</div>
+
+      <div class="files">
+        <div class="files-h"><b>Das passiert gleich</b> 5 Dateien geprüft</div>
+
+        <div class="file">
+          <div class="f-ico" style="background:#0b57d0;color:#d3e3fd">PDF</div>
+          <span class="f-name">Handbuch_final.pdf</span>
+          <span class="f-to"><span class="sym">arrow_forward</span> Dokumente</span>
+          <span class="f-sz">4,1 MB</span>
+        </div>
+
+        <div class="file">
+          <div class="f-ico" style="background:#146c2e;color:#a6f0b4">JPG</div>
+          <span class="f-name">urlaub_2026.jpg</span>
+          <span class="f-to"><span class="sym">arrow_forward</span> Bilder</span>
+          <span class="f-sz">2,8 MB</span>
+        </div>
+
+        <div class="file">
+          <div class="f-ico" style="background:#5b3ca8;color:#e0d0ff">MP4</div>
+          <span class="f-name">vorlesung.mp4</span>
+          <span class="f-to"><span class="sym">arrow_forward</span> Videos</span>
+          <span class="f-sz">1,1 GB</span>
+        </div>
+
+        <div class="file wait">
+          <div class="f-ico" style="background:#4a4450;color:#938f99">ZIP</div>
+          <span class="f-name">backup_2026.zip</span>
+          <span class="f-to stay">Dateiname unbekannt</span>
+          <span class="f-sz">312 MB</span>
+        </div>
+
+        <div class="file wait">
+          <div class="f-ico" style="background:#4a4450;color:#938f99">CRD</div>
+          <span class="f-name">film.mp4.crdownload</span>
+          <span class="f-to stay">lädt noch</span>
+          <span class="f-sz">47 MB</span>
+        </div>
+      </div>
+
+      <div class="done">
+        <span class="sym">check_circle</span>
+        <div>
+          <div class="done-t">3 Dateien einsortiert</div>
+          <div class="done-s">128 MB · nichts überschrieben</div>
+        </div>
+        <button class="btn-sec"><span class="sym">undo</span> Rückgängig</button>
+      </div>
+    </div>
+
+    <!-- 3) Ordner + Sicherheit -->
+    <div class="side">
+      <div class="s-h">Downloads-Ordner</div>
+
+      <div class="path">
+        <span class="sym">folder</span>
+        <div class="path-txt">
+          <div class="path-lbl">Aktueller Ordner</div>
+          <div class="path-val">C:\Users\Friedrich\Downloads</div>
+        </div>
+      </div>
+
+      <div class="side-actions">
+        <button class="btn-block"><span class="sym">folder_open</span> Anderen Ordner wählen</button>
+        <button class="btn-block"><span class="sym">open_in_new</span> Ordner öffnen</button>
+        <button class="btn-block"><span class="sym">history</span> Verlauf ansehen</button>
+      </div>
+
+      <div class="safety">
+        <span class="sym">verified</span>
+        <div>
+          <b>Alles ist rückgängig machbar.</b><br>
+          Scrinium überschreibt nie eine Datei. Bei Namenskonflikten
+          wird eine Nummer angehängt.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
