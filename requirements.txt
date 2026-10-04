@@ -1,0 +1,4 @@
+# Scrinium runtime dependencies (Windows)
+# Only customtkinter ships at runtime - everything else is stdlib.
+customtkinter>=5.2.2
+darkdetect>=0.8.0          # customtkinter pulls this in; pinned for clarity

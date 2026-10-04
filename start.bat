@@ -1,17 +1,22 @@
 @echo off
+rem Scrinium starter. Prefer the bundled exe, fall back to pythonw.
 setlocal
 cd /d "%~dp0"
-rem 1) Preferred: bundled portable exe (no Python/customtkinter needed)
-if exist "dist\Downsort.exe" (
-    start "" "dist\Downsort.exe"
+set "PYTHONPATH="
+
+if exist "dist\Scrinium.exe" (
+    start "" "dist\Scrinium.exe"
     exit /b
 )
-rem 2) Fallback: system Python 3.12 pythonw (has customtkinter)
-set "PYTHONPATH="
-set "SYS=%APPDATA%\..\Local\Programs\Python\Python312\pythonw.exe"
+if exist "Scrinium.exe" (
+    start "" "Scrinium.exe"
+    exit /b
+)
+
+set "SYS=%LOCALAPPDATA%\Programs\Python\Python312\pythonw.exe"
 if exist "%SYS%" (
-    start "" "%SYS%" main.pyw
+    start "" "%SYS%" "%~dp0main.pyw"
 ) else (
-    start "" pythonw main.pyw
+    start "" pythonw "%~dp0main.pyw"
 )
 exit /b
