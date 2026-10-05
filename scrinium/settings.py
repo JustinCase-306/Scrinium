@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import tempfile
 from dataclasses import dataclass, field, asdict
 
@@ -130,25 +131,35 @@ class Settings:
     def werkzeug_hinzufuegen(self, pfad: str) -> str:
         """Nimmt einen Werkzeugordner auf. Gibt eine Meldung zurueck.
 
-        Geprueft wird, ob dort wirklich ein Werkzeug liegt - ein Ordner
-        ohne `__init__.py` mit `NAME` und `start()` ist keins.
+        Geprueft wird, ob dort wirklich ein Werkzeug liegt: ein Ordner
+        mit `__init__.py`, das eine Startfunktion hat. Die darf `starte`
+        (der Name im Rahmenvertrag) oder `start` heissen - beides kam
+        vor, und nur eines davon zu akzeptieren wuerde echte
+        Werkzeuge abweisen.
         """
-        pfad = os.path.abspath(str(pfad or "").strip())
-        if not pfad or not os.path.isdir(pfad):
+        pfad = str(pfad or "").strip()
+        if not pfad:
+            # os.path.abspath("") liefert das Arbeitsverzeichnis - ein
+            # leerer Name wuerde also wie ein gueltiger Ordner aussehen.
+            return "ORDNER FEHLT"
+        pfad = os.path.abspath(pfad)
+        if not os.path.isdir(pfad):
             return "ORDNER FEHLT"
         init = os.path.join(pfad, "__init__.py")
         if not os.path.isfile(init):
             return "KEIN WERKZEUG"
 
-        # Imports in einem subprocess-artigen Sinn vermeiden: nur lesen.
-        quelle = ""
         try:
             with open(init, "r", encoding="utf-8") as fh:
-                quelle = fh.read(8000)
+                quelle = fh.read()
         except OSError:
             return "NICHT LESBAR"
 
-        if "def start" not in quelle:
+        # "starte?" matcht start und starte in einem Muster. Nur ein
+        # davon zu akzeptieren wuerde echte Werkzeuge abweisen.
+        if not re.search(r"^\s*def\s+starte?\s*\(", quelle, re.M):
+            return "KEIN WERKZEUG"
+        if not re.search(r"^\s*NAME\s*=", quelle, re.M):
             return "KEIN WERKZEUG"
 
         # Schon drin? Dann nichts doppelt eintragen.

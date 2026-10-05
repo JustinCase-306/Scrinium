@@ -21,12 +21,12 @@ Tools spaeter dazukommen.
 from __future__ import annotations
 import json
 import os
+import sys
 import threading
 from . import core, texts
-from .settings import Settings, config_path, _standard_downloads
+from .settings import Settings, _standard_downloads
 ZUSTAND = {'tools': [], 'settings': {}, 'running': None, 'result': None}
 _FENSTER = None
-_ORDNER_WAHL: dict = {}
 
 def _window():
     """Das offene Fenster, oder None. Nie im JSON-Zustand."""
@@ -356,55 +356,31 @@ def open_settings() -> str:
     """
     import webview
 
-    # Schon offen? Dann nur nach vorn bringen.
-    for w in _offene_settings():
-        try:
-            w.show()
-            return "offen"
-        except Exception:
-            pass
+    from .window import bridge_api
 
     html = _settings_html()
-    if not html:
+    if not html or _window() is None:
         return ""
-    fenster = _window()
-    if fenster is None:
-        return ""
-
     try:
-        neues = webview.create_window(
+        webview.create_window(
             texts.sag("einstellungen.titel", "Einstellungen"),
-            html, js_api=_settings_api(),
-            width=900, height=820,
-            min_size=(700, 600),
+            html, js_api=bridge_api(),
+            width=900, height=820, min_size=(700, 600),
             background_color="#141218")
     except Exception:
         return ""
     return "offen"
 
 
-_OFFENE_SETTINGS: list = []
-
-
-def _offene_settings() -> list:
-    return _OFFENE_SETTINGS
-
-
 def _settings_html() -> str:
-    pfad = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                        "settings.html")
+    """Wo liegt settings.html - im Quellcode und in der gepackten EXE."""
+    hier = os.path.dirname(os.path.abspath(__file__))
+    pfad = os.path.join(hier, "settings.html")
     if os.path.isfile(pfad):
         return pfad
-    if getattr(__import__("sys"), "frozen", False):
-        import sys
-        kandidat = os.path.join(os.path.dirname(sys.executable),
-                                "scrinium", "settings.html")
-        if os.path.isfile(kandidat):
-            return kandidat
+    if getattr(sys, "frozen", False):
+        gepackt = os.path.join(os.path.dirname(sys.executable),
+                               "scrinium", "settings.html")
+        if os.path.isfile(gepackt):
+            return gepackt
     return ""
-
-
-def _settings_api():
-    """Gibt dem Einstellungsfenster seine eigenen API-Funktionen."""
-    from .window import bridge_api
-    return bridge_api()
