@@ -81,8 +81,33 @@ def webview2_present():
     return False
 
 
-def starten() -> int:
-    """Oeffnet das Fenster. Gibt einen Exitcode zurueck."""
+def _mittig(breite: int, hoehe: int) -> tuple:
+    """Fenster mittig auf dem primaeren Monitor.
+
+    Fragt Windows nach der Bildschirmaufloesung des primaeren Monitors.
+    Ohne Antwort (z.B. unter Linux) faellt es auf 100,100 zurueck.
+    """
+    try:
+        import ctypes
+
+        user32 = ctypes.windll.user32
+        user32.GetSystemMetrics.restype = ctypes.c_int
+        bild_b = user32.GetSystemMetrics(0)
+        bild_h = user32.GetSystemMetrics(1)
+        return (max(0, (bild_b - breite) // 2),
+                max(0, (bild_h - hoehe) // 2))
+    except Exception:
+        return (100, 100)
+
+
+def starten(x: int | None = None, y: int | None = None,
+            breite: int = 1280, hoehe: int = 820) -> int:
+    """Oeffnet das Fenster. Gibt einen Exitcode zurueck.
+
+    `x`/`y` setzen die Position. Negative Werte sind erlaubt - so liegen
+    Monitore links oder oberhalb vom primaeren. Ohne Position startet
+    das Fenster mittig, wie Windows es fuer neue Fenster macht.
+    """
     if not webview2_present():
         # Kein Fenster moeglich: die CLI funktioniert trotzdem.
         print("Scrinium: Windows-Webansicht fehlt.")
@@ -105,13 +130,23 @@ def starten() -> int:
         html = html_pfad
 
     api = bridge_api()
+
+    # Ohne Position: mittig auf dem primaeren Monitor. pywebview kann das
+    # nicht selbst, aber Windows kann es - easygui nicht, also rechnen.
+    pos = None
+    if x is not None and y is not None:
+        pos = (int(x), int(y))
+    else:
+        pos = _mittig(breite, hoehe)
+
     fenster = webview.create_window(
         "Scrinium", html,
         js_api=api,
-        width=1280, height=820,
+        width=breite, height=hoehe,
         min_size=(900, 620),
         background_color="#141218",
         text_select=False,
+        **({"pos": pos} if pos else {}),
     )
     bridge.set_window(fenster)
 
