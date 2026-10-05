@@ -349,27 +349,42 @@ def open_folder() -> str:
 def open_settings() -> str:
     """Oeffnet die Einstellungen als eigenes Fenster.
 
-    Bis hierher war das nur der Ordner im Explorer mit der config.json -
-    unbrauchbar, weil man dort nichts einstellen kann. Jetzt gibt es
-    eine Oberflaeche: Sprache, Download-Ordner, eigene Regeln, eigene
-    Werkzeuge.
-
     Rueckgabewert ist '' (nichts) oder 'offen'.
+
+    Der Titel kommt aus `texts.sag` - das nimmt EIN Argument. Ein
+    zweites ("Einstellungen" als Notnagel) wirft TypeError:
+    `sag() takes 1 positional argument but 2 were given`.
+
+    Dieser TypeError war stumm verschluckt und hat den Knopf "Einstellungen"
+    damit wirkungslos gemacht: hier kam '' heraus, und das JavaScript hat
+    kein .catch(), also gab es keine Meldung. Der fehlende Text ist
+    ohnehin abgedeckt - `sag` gibt den Schluessel selbst zurueck.
     """
     import webview
 
     from .window import bridge_api
 
+    titel = texts.sag("einstellungen.titel") or "Einstellungen"
+
     html = _settings_html()
-    if not html or _window() is None:
+    if not html:
+        # Kein stiller Ausstieg: so sieht man im Protokoll, was fehlt.
+        print("Scrinium: settings.html nicht gefunden - "
+              "Einstellungen nicht verfuegbar.")
         return ""
+    if _window() is None:
+        print("Scrinium: kein Hauptfenster - Einstellungen nicht moeglich.")
+        return ""
+
     try:
         webview.create_window(
-            texts.sag("einstellungen.titel", "Einstellungen"),
-            html, js_api=bridge_api(),
+            titel, html, js_api=bridge_api(),
             width=900, height=820, min_size=(700, 600),
             background_color="#141218")
-    except Exception:
+    except Exception as e:
+        # Frueher stand hier ein blankes `return ""`. Damit sah ein
+        # Fehler wie ein toter Knopf aus.
+        print(f"Scrinium: Einstellungen konnten nicht oeffnen ({e}).")
         return ""
     return "offen"
 

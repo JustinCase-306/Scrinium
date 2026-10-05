@@ -224,6 +224,99 @@ def test_tools_dir_prefers_meipass_over_the_exe_folder(tmp_path, monkeypatch):
         os.path.normcase(str(meipass / "tools"))
 
 
+# --------------------------------------------------------------------------
+# 4. Der Einstellungen-Knopf
+# --------------------------------------------------------------------------
+def test_texts_sag_takes_only_one_argument():
+    """sag(key, **platzhalter) - nur EIN positionales Argument.
+
+    ``texts.sag("einstellungen.titel", "Einstellungen")`` wirft
+    TypeError. In open_settings stand das im try-Block, der Fehler wurde
+    verschluckt, und der Knopf "Einstellungen" tat nichts.
+    """
+    import inspect
+
+    from scrinium import texts
+
+    parameter = inspect.signature(texts.sag).parameters
+    positional = [p for p in parameter.values()
+                  if p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD)]
+    assert len(positional) == 1, (
+        f"sag() hat jetzt {len(positional)} positionale Parameter - "
+        f"die Aufrufe im Projekt pruefen")
+
+
+def test_no_sag_call_uses_two_positional_arguments():
+    """Kein Aufruf im Projekt darf zwei positionale Argumente geben."""
+    treffer = []
+    for dp, dn, fn in os.walk(SCRINIUM):
+        dn[:] = [d for d in dn if d != "__pycache__"]
+        for f in fn:
+            if not f.endswith(".py") or f == "texts.py":
+                continue
+            p = os.path.join(dp, f)
+            for i, z in enumerate(open(p, encoding="utf-8"), 1):
+                for m in re.finditer(r"\bsag\((.*?)\)", z):
+                    teile = [t for t in m.group(1).split(",") if t.strip()]
+                    if len(teile) > 1 and "=" not in teile[1]:
+                        treffer.append(f"{os.path.basename(p)}:{i}  {z.strip()[:60]}")
+    assert not treffer, (
+        "sag() wird mit zwei positionalen Argumenten gerufen - das wirft "
+        f"TypeError:\n  " + "\n  ".join(treffer))
+
+
+def test_open_settings_opens_a_window(monkeypatch):
+    """Der Knopf muss wirklich ein Fenster erzeugen.
+
+    Ohne echtes Fenster: ``create_window`` wird ersetzt und muss mit dem
+    richtigen Titel und der settings.html gerufen werden. Vorher kam
+    hier '' heraus, ohne dass etwas passierte.
+    """
+    import sys as _sys
+    import types
+
+    from scrinium import bridge
+
+    gerufen = {}
+
+    def create_window(titel, *args, **kwargs):
+        gerufen["titel"] = titel
+        gerufen["args"] = args
+        return types.SimpleNamespace()
+
+    fake = types.ModuleType("webview")
+    fake.create_window = create_window
+    fake.start = lambda *a, **k: None
+    fake.FileDialog = type("FileDialog", (), {"FOLDER": 20, "OPEN": 10})
+    monkeypatch.setitem(_sys.modules, "webview", fake)
+    monkeypatch.setattr(bridge, "_window", lambda: object())
+    monkeypatch.setattr(bridge, "_settings_html", lambda: os.path.join(
+        SCRINIUM, "settings.html"))
+
+    ergebnis = bridge.open_settings()
+    assert ergebnis == "offen", (
+        f"open_settings() gab {ergebnis!r} zurueck - der Knopf bleibt stumm")
+    assert gerufen.get("titel") == "Einstellungen", (
+        f"falscher Fenstertitel: {gerufen.get('titel')!r}")
+
+
+def test_open_settings_says_so_when_the_file_is_missing(monkeypatch, capsys):
+    """Fehlt settings.html, muss das im Protokoll stehen - nicht stumm."""
+    import sys as _sys
+    import types
+
+    from scrinium import bridge
+
+    fake = types.ModuleType("webview")
+    fake.create_window = lambda *a, **k: None
+    monkeypatch.setitem(_sys.modules, "webview", fake)
+    monkeypatch.setattr(bridge, "_window", lambda: object())
+    monkeypatch.setattr(bridge, "_settings_html", lambda: "")
+
+    assert bridge.open_settings() == ""
+    assert "settings.html" in capsys.readouterr().out
+
+
 def test_tools_dir_finds_the_bundled_sorter():
     """Im Quellcode muss das mitgelieferte Werkzeug gefunden werden."""
     from scrinium import core
