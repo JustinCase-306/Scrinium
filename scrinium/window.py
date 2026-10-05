@@ -154,6 +154,38 @@ def bridge_api():
         def open_settings(self):
             return bridge.open_settings()
 
+        # --- Einstellungen (zweites Fenster) --------------------------
+        def settings_read(self):
+            return bridge.settings_lesen()
+
+        def settings_set_language(self, sprache):
+            return bridge.settings_sprache_setzen(sprache)
+
+        def settings_set_downloads(self, pfad):
+            return bridge.settings_downloads_setzen(pfad)
+
+        def settings_set_min_age(self, sekunden):
+            return bridge.settings_min_age_setzen(sekunden)
+
+        def settings_add_rule(self, art, wert, ziel):
+            return bridge.settings_regel_hinzufuegen(art, wert, ziel)
+
+        def settings_remove_rule(self, art, wert):
+            return bridge.settings_regel_entfernen(art, wert)
+
+        def settings_add_tool(self, pfad):
+            return bridge.settings_werkzeug_hinzufuegen(pfad)
+
+        def settings_remove_tool(self, pfad):
+            return bridge.settings_werkzeug_entfernen(pfad)
+
+        def settings_pick_folder(self):
+            """Ordnerdialog fuer Download- oder Werkzeugordner."""
+            return bridge.choose_folder(auswahl=True)
+
+        def settings_pick_tool_folder(self):
+            return bridge.choose_tool_folder()
+
         def preview(self, wid):
             return bridge.preview(wid)
 

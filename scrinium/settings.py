@@ -58,6 +58,17 @@ class Settings:
     downloads_on_new_files: bool = True
     downloads_min_age: int = 30
 
+    # Eigene Sortierregeln. Zwei Formen, beide benutzt der Sortierer:
+    #   {"art": "endung", "wert": ".xyz", "ziel": "Dokumente"}
+    #   {"art": "muster", "wert": "rechnung*", "ziel": "Dokumente"}
+    # `ziel` ist ein Ordnername wie "Dokumente" - nie uebersetzt.
+    sortier_regeln: list = field(default_factory=list)
+
+    # Werkzeuge, die der Nutzer selbst hinzugefuegt hat. Das sind Pfade
+    # auf Ordner mit einem __init__.py neben dem Programm - nicht auf
+    # Dateien im Internet.
+    eigene_werkzeuge: list = field(default_factory=list)
+
     @classmethod
     def standard(cls) -> "Settings":
         """Standardwerte inkl. Default-Download-Ordner."""
@@ -71,6 +82,94 @@ class Settings:
 
     def toggle_tool(self, wid: str, an: bool) -> None:
         self.tools_enabled[wid] = an
+
+    # -----------------------------------------------------------------
+    # eigene Regeln
+    # -----------------------------------------------------------------
+    def regel_hinzufuegen(self, art: str, wert: str, ziel: str) -> dict | None:
+        """Nimmt eine Regel auf. Gibt sie zurueck oder None bei Unsinn.
+
+        `art` ist "endung" oder "muster". Beides wird auf Kleinbuchstaben
+        und ohne fuehrenden Punkt gebracht - sonst findet der Sortierer
+        seine eigene Regel nicht wieder.
+        """
+        art = str(art or "").strip().lower()
+        wert = str(wert or "").strip().lower()
+        ziel = str(ziel or "").strip()
+
+        if art not in ("endung", "muster"):
+            return None
+        if not wert or not ziel:
+            return None
+        if art == "endung" and not wert.startswith("."):
+            wert = "." + wert
+
+        # Doppelte Regel nicht zweimal aufnehmen
+        for r in self.sortier_regeln:
+            if r.get("art") == art and r.get("wert") == wert:
+                return r
+
+        regel = {"art": art, "wert": wert, "ziel": ziel}
+        self.sortier_regeln.append(regel)
+        return regel
+
+    def regel_entfernen(self, art: str, wert: str) -> bool:
+        art = str(art or "").strip().lower()
+        wert = str(wert or "").strip().lower()
+        if art == "endung" and not wert.startswith("."):
+            wert = "." + wert
+        vorher = len(self.sortier_regeln)
+        self.sortier_regeln = [r for r in self.sortier_regeln
+                               if not (r.get("art") == art
+                                       and r.get("wert") == wert)]
+        return len(self.sortier_regeln) != vorher
+
+    # -----------------------------------------------------------------
+    # eigene Werkzeuge
+    # -----------------------------------------------------------------
+    def werkzeug_hinzufuegen(self, pfad: str) -> str:
+        """Nimmt einen Werkzeugordner auf. Gibt eine Meldung zurueck.
+
+        Geprueft wird, ob dort wirklich ein Werkzeug liegt - ein Ordner
+        ohne `__init__.py` mit `NAME` und `start()` ist keins.
+        """
+        pfad = os.path.abspath(str(pfad or "").strip())
+        if not pfad or not os.path.isdir(pfad):
+            return "ORDNER FEHLT"
+        init = os.path.join(pfad, "__init__.py")
+        if not os.path.isfile(init):
+            return "KEIN WERKZEUG"
+
+        # Imports in einem subprocess-artigen Sinn vermeiden: nur lesen.
+        quelle = ""
+        try:
+            with open(init, "r", encoding="utf-8") as fh:
+                quelle = fh.read(8000)
+        except OSError:
+            return "NICHT LESBAR"
+
+        if "def start" not in quelle:
+            return "KEIN WERKZEUG"
+
+        # Schon drin? Dann nichts doppelt eintragen.
+        for eintrag in self.eigene_werkzeuge:
+            if os.path.normcase(os.path.abspath(eintrag["pfad"])) == \
+               os.path.normcase(pfad):
+                return "SCHON DABEI"
+
+        name = os.path.basename(pfad.rstrip("\\/")).lstrip("_")
+        self.eigene_werkzeuge.append({"pfad": pfad, "name": name,
+                                      "quelle": "nutzer"})
+        return "OK"
+
+    def werkzeug_entfernen(self, pfad: str) -> bool:
+        pfad = os.path.abspath(str(pfad or "").strip())
+        vorher = len(self.eigene_werkzeuge)
+        self.eigene_werkzeuge = [e for e in self.eigene_werkzeuge
+                                 if os.path.normcase(
+                                     os.path.abspath(e["pfad"]))
+                                 != os.path.normcase(pfad)]
+        return len(self.eigene_werkzeuge) != vorher
 
     # -----------------------------------------------------------------
     def speichern(self) -> str:
@@ -122,6 +221,12 @@ class Settings:
                         pass
                 elif isinstance(aktuell, dict):
                     if isinstance(wert, dict):
+                        setattr(standard, feld_name, wert)
+                elif isinstance(aktuell, list):
+                    # Ohne diesen Zweig wurden sortier_regeln und
+                    # eigene_werkzeuge beim Neuladen kommentarlos
+                    # verworfen.
+                    if isinstance(wert, list):
                         setattr(standard, feld_name, wert)
                 elif isinstance(aktuell, str):
                     if isinstance(wert, str):

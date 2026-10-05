@@ -23,7 +23,7 @@ import json
 import os
 import threading
 from . import core, texts
-from .settings import Settings, config_path
+from .settings import Settings, config_path, _standard_downloads
 ZUSTAND = {'tools': [], 'settings': {}, 'running': None, 'result': None}
 _FENSTER = None
 _ORDNER_WAHL: dict = {}
@@ -96,8 +96,12 @@ def set_downloads_folder(path: str) -> dict:
     e.speichern()
     return _read_state()
 
-def choose_folder() -> str:
-    """Oeffnet den Windows-Ordnerdialog. Gibt den Pfad zurueck oder ''.
+def choose_folder(auswahl: bool = False) -> str:
+    """Ordnerdialog. Gibt den Pfad zurueck oder ''.
+
+    Mit `auswahl=True` wird NICHTS gespeichert - das Fenster will den
+    Pfad erst anzeigen, damit der Nutzer ihn bestaetigen kann. Ohne
+    `auswahl` wird er direkt als Download-Ordner uebernommen.
 
     Muss im Hauptthread laufen, sonst blockiert Windows den Dialog.
     """
@@ -108,15 +112,168 @@ def choose_folder() -> str:
     fenster = _window()
     if fenster is None:
         return ''
-    window.create_file_dialog(webview.OPEN_DIALOG, directory_only=True, func=zurueck)
+    # FileDialog.FOLDER, nicht OPEN_DIALOG + directory_only - Letzteres
+    # gibt es in pywebview 6 nicht und laesst den Knopf abstuerzen.
+    fenster.create_file_dialog(webview.FileDialog.FOLDER, func=zurueck)
     for _ in range(600):
         if '_folder_choice' in ZUSTAND:
             path = ZUSTAND.pop('_folder_choice')
-            if path:
+            if path and not auswahl:
                 set_downloads_folder(path)
-                return path
+            return path or ''
         threading.Event().wait(0.1)
     return ''
+
+
+def choose_tool_folder() -> str:
+    """Ordnerdialog fuer ein neues Werkzeug. Speichert nichts."""
+    import webview
+
+    def zurueck(result):
+        ZUSTAND['_tool_choice'] = result[0] if result else ''
+    fenster = _window()
+    if fenster is None:
+        return ''
+    fenster.create_file_dialog(webview.FileDialog.FOLDER, func=zurueck)
+    for _ in range(600):
+        if '_tool_choice' in ZUSTAND:
+            return ZUSTAND.pop('_tool_choice') or ''
+        threading.Event().wait(0.1)
+    return ''
+
+
+# ---------------------------------------------------------------------------
+# Einstellungen - was der Knopf "Einstellungen" im Fenster aufruft
+# ---------------------------------------------------------------------------
+def settings_lesen() -> dict:
+    """Alles, was das Einstellungsfenster zum Anzeigen braucht."""
+    e = Settings.laden()
+
+    # Alle Ordner, in die ein Werkzeug einsortieren kann. Die kommen aus
+    # dem Werkzeug - der Rahmen darf sie nicht selbst erfinden.
+    ordner = set()
+    mitgeliefert = []
+    for w in core.find_tools():
+        ordner.update(_ordner_von_tool(w))
+        mitgeliefert.append({"id": w.id, "name": w.name, "pfad": w.folder})
+
+    regeln = []
+    for r in e.sortier_regeln:
+        if isinstance(r, dict) and r.get("wert"):
+            regeln.append({"art": r.get("art", "endung"),
+                           "wert": r.get("wert", ""),
+                           "ziel": r.get("ziel", "")})
+
+    return {
+        "language": e.language,
+        "downloads_folder": e.downloads_folder,
+        "downloads_min_age": e.downloads_min_age,
+        "downloads_interval": e.downloads_interval,
+        "downloads_on_new_files": bool(e.downloads_on_new_files),
+        "regeln": regeln,
+        "ordner": sorted(ordner),
+        "tools_mitgeliefert": mitgeliefert,
+        "eigene_werkzeuge": [dict(w) for w in e.eigene_werkzeuge
+                             if isinstance(w, dict)],
+        "texte": settings_texts(e.language),
+    }
+
+
+def _ordner_von_tool(w) -> list:
+    """Welche Zielordner kann ein Werkzeug? Der Rahmen fragt es nach."""
+    ordner = []
+    try:
+        kategorien = getattr(w.modul, "categories", None)
+        if callable(kategorien):
+            for k in kategorien():
+                name = getattr(k, "name", None) or getattr(k, "folder", None)
+                if name:
+                    ordner.append(str(name))
+    except Exception:
+        pass
+    return ordner
+
+
+def settings_texts(sprache: str) -> dict:
+    """Alle Beschriftungen des Einstellungsfensters."""
+    texts.set_language(sprache)
+    keys = ("einstellungen.titel", "einstellungen.sprache",
+            "einstellungen.downloads", "einstellungen.ordner_waehlen",
+            "einstellungen.regeln", "einstellungen.regel_neu",
+            "einstellungen.endung", "einstellungen.muster",
+            "einstellungen.ziel", "einstellungen.werkzeuge",
+            "einstellungen.werkzeug_hinzu", "einstellungen.speichern",
+            "einstellungen.zurueck", "einstellungen.min_age",
+            "einstellungen.entfernen", "einstellungen.leer",
+            "einstellungen.ok", "einstellungen.abbruch",
+            "einstellungen.neu", "einstellungen.werkzeug_ordner")
+    return {k: texts.sag(k) for k in keys}
+
+
+# --- Aenderungen -----------------------------------------------------------
+def settings_sprache_setzen(sprache: str) -> dict:
+    e = Settings.laden()
+    e.language = sprache if sprache in ("de", "en") else "de"
+    e.speichern()
+    texts.set_language(e.language)
+    return _read_state()
+
+
+def settings_downloads_setzen(pfad: str) -> dict:
+    e = Settings.laden()
+    pfad = str(pfad or "").strip()
+    if pfad and not os.path.isdir(pfad):
+        return {"ok": False, "fehler": "ORDNER FEHLT"}
+    e.downloads_folder = pfad or _standard_downloads()
+    e.speichern()
+    return {"ok": True, "downloads_folder": e.downloads_folder}
+
+
+def settings_min_age_setzen(sekunden: int) -> dict:
+    e = Settings.laden()
+    try:
+        sek = int(sekunden)
+    except (TypeError, ValueError):
+        sek = 30
+    e.downloads_min_age = max(0, sek)
+    e.speichern()
+    return {"ok": True, "downloads_min_age": e.downloads_min_age}
+
+
+def settings_regel_hinzufuegen(art: str, wert: str, ziel: str) -> dict:
+    e = Settings.laden()
+    regel = e.regel_hinzufuegen(art, wert, ziel)
+    if regel is None:
+        return {"ok": False, "fehler": "UNGUELTIG"}
+    e.speichern()
+    return {"ok": True, "regel": regel, "regeln": e.sortier_regeln}
+
+
+def settings_regel_entfernen(art: str, wert: str) -> dict:
+    e = Settings.laden()
+    weg = e.regel_entfernen(art, wert)
+    e.speichern()
+    return {"ok": weg, "regeln": e.sortier_regeln}
+
+
+def settings_werkzeug_hinzufuegen(pfad: str) -> dict:
+    e = Settings.laden()
+    meldung = e.werkzeug_hinzufuegen(pfad)
+    if meldung != "OK":
+        return {"ok": False, "fehler": meldung}
+    e.speichern()
+    core.reload_tools()
+    return {"ok": True, "eigene_werkzeuge": e.eigene_werkzeuge,
+            "tools": _read_state()["tools"]}
+
+
+def settings_werkzeug_entfernen(pfad: str) -> dict:
+    e = Settings.laden()
+    weg = e.werkzeug_entfernen(pfad)
+    e.speichern()
+    core.reload_tools()
+    return {"ok": weg, "eigene_werkzeuge": e.eigene_werkzeuge,
+            "tools": _read_state()["tools"]}
 
 def refresh() -> None:
     """Schickt den neuen Zustand an die Oberflaeche."""
@@ -188,14 +345,66 @@ def open_folder() -> str:
     return ''
 
 def open_settings() -> str:
-    """Oeffnet die Scrinium-Settings im Explorer.
+    """Oeffnet die Einstellungen als eigenes Fenster.
 
-    Bewusst kein zweites Fenster: fuer den Anfang reicht der Ordner, und
-    ein Einstellungsfenster waere eine komplette Oberflaeche mehr.
+    Bis hierher war das nur der Ordner im Explorer mit der config.json -
+    unbrauchbar, weil man dort nichts einstellen kann. Jetzt gibt es
+    eine Oberflaeche: Sprache, Download-Ordner, eigene Regeln, eigene
+    Werkzeuge.
+
+    Rueckgabewert ist '' (nichts) oder 'offen'.
     """
-    folder = os.path.dirname(config_path())
+    import webview
+
+    # Schon offen? Dann nur nach vorn bringen.
+    for w in _offene_settings():
+        try:
+            w.show()
+            return "offen"
+        except Exception:
+            pass
+
+    html = _settings_html()
+    if not html:
+        return ""
+    fenster = _window()
+    if fenster is None:
+        return ""
+
     try:
-        os.startfile(folder)
-        return folder
-    except OSError:
-        return ''
+        neues = webview.create_window(
+            texts.sag("einstellungen.titel", "Einstellungen"),
+            html, js_api=_settings_api(),
+            width=900, height=820,
+            min_size=(700, 600),
+            background_color="#141218")
+    except Exception:
+        return ""
+    return "offen"
+
+
+_OFFENE_SETTINGS: list = []
+
+
+def _offene_settings() -> list:
+    return _OFFENE_SETTINGS
+
+
+def _settings_html() -> str:
+    pfad = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "settings.html")
+    if os.path.isfile(pfad):
+        return pfad
+    if getattr(__import__("sys"), "frozen", False):
+        import sys
+        kandidat = os.path.join(os.path.dirname(sys.executable),
+                                "scrinium", "settings.html")
+        if os.path.isfile(kandidat):
+            return kandidat
+    return ""
+
+
+def _settings_api():
+    """Gibt dem Einstellungsfenster seine eigenen API-Funktionen."""
+    from .window import bridge_api
+    return bridge_api()

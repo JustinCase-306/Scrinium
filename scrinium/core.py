@@ -196,12 +196,44 @@ def _lade(folder: str) -> Tool:
 
 
 def find_tools(folder: str | None = None) -> list[Tool]:
-    """Alle Tools in `tools/` - ohne sie zu kennen.
+    """Alle Tools: die mitgelieferten aus `tools/` plus die eigenen.
 
     Regel: ein Ordner ist ein Tool, wenn er eine `__init__.py` hat.
     Alles andere wird ignoriert (auch __pycache__ und Textdateien).
+
+    Eigene Werkzeuge kommen aus den Settings. Sie stehen in der
+    Werkzeugleiste genauso wie die mitgelieferten - der Rahmen
+    unterscheidet sie nicht.
     """
-    basis = folder or tools_dir()
+    gefunden = _finde_in(folder or tools_dir())
+
+    # Eigene Werkzeuge: Pfade aus den Settings. Ein Pfad, der nicht
+    # mehr existiert, wird stillschweigend uebersprungen - der Nutzer
+    # hat den Ordner vielleicht geloescht.
+    from .settings import Settings
+
+    try:
+        e = Settings.laden()
+    except Exception:
+        e = None
+
+    if e is not None:
+        bekannt = {os.path.normcase(w.folder) for w in gefunden}
+        for eintrag in e.eigene_werkzeuge:
+            pfad = eintrag.get("pfad") if isinstance(eintrag, dict) else None
+            if not pfad or not os.path.isdir(pfad):
+                continue
+            if os.path.normcase(os.path.abspath(pfad)) in bekannt:
+                continue
+            gefunden.append(_lade(pfad))
+            bekannt.add(os.path.normcase(os.path.abspath(pfad)))
+
+    gefunden.sort(key=lambda w: w.name.lower())
+    return gefunden
+
+
+def _finde_in(basis: str) -> list[Tool]:
+    """Nur die Werkzeuge in einem Ordner - ohne die eigenen."""
     gefunden: list[Tool] = []
 
     try:
@@ -219,8 +251,21 @@ def find_tools(folder: str | None = None) -> list[Tool]:
             continue
         gefunden.append(_lade(path))
 
-    gefunden.sort(key=lambda w: w.name.lower())
     return gefunden
+
+
+def reload_tools() -> list[Tool]:
+    """Sucht alle Werkzeuge neu.
+
+    `_lade()` legt nichts in `sys.modules` ab - jedes Modul wird frisch
+    ausgefuehrt. Deshalb gibt es hier keinen Cache zu leeren, sondern
+    nur das alte Modulobjekt aus dem Weg zu raeumen, damit ein
+    geaendertes Werkzeug nicht durch eine alte Kopie im Speicher
+    weiterlaeuft.
+    """
+    for name in [n for n in sys.modules if n.startswith("scrinium_tool_")]:
+        del sys.modules[name]
+    return find_tools()
 
 
 def tool_names() -> list[str]:

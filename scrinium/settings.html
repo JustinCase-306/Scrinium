@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Einstellungen</title>
+<style>
+  /* Bewusst die gleichen Farben und Abstände wie window.html - das
+     Einstellungsfenster darf nicht wie ein anderes Programm wirken. */
+  :root {
+    --bg: #141218;
+    --surface: #1D1B20;
+    --surface-2: #25232A;
+    --outline: #49454F;
+    --outline-2: #938F99;
+    --primary: #D0BCFF;
+    --on: #E6E0E9;
+    --on-dim: #CAC4D0;
+    --ok: #7D5260;
+    --radius: 999px;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--on);
+    font-size: 17px;
+    line-height: 1.5;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* --- Kopfzeile: nur Titel und Zurueck --- */
+  .top {
+    display: flex; align-items: center; gap: 16px;
+    padding: 22px 30px 18px;
+    border-bottom: 1px solid var(--outline);
+    flex: 0 0 auto;
+  }
+  .top h1 { font-size: 30px; font-weight: 600; margin: 0; flex: 1; }
+
+  /* --- Inhalt: eine Spalte, breite Zeilen, viel Luft --- */
+  .body {
+    flex: 1 1 auto; min-height: 0; overflow-y: auto;
+    padding: 26px 30px 40px;
+  }
+  section { margin-bottom: 38px; }
+  h2 {
+    font-size: 21px; font-weight: 600; margin: 0 0 14px;
+    color: var(--primary);
+  }
+  .hint { font-size: 15px; color: var(--on-dim); margin: -6px 0 14px; }
+
+  .row {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--outline);
+  }
+  .row:last-child { border-bottom: none; }
+  .row-label { flex: 1; min-width: 0; }
+  .row-label b { font-weight: 600; display: block; }
+
+  /* --- Beschriftungen und Felder: nie kleiner als 17px --- */
+  label { font-size: 15px; color: var(--on-dim); display: block; margin-bottom: 5px; }
+  input[type=text], input[type=number], select {
+    font-family: inherit; font-size: 17px; color: var(--on);
+    background: var(--surface-2);
+    border: 2px solid var(--outline);
+    border-radius: 10px;
+    padding: 12px 14px;
+    width: 100%;
+    min-height: 50px;
+  }
+  input:focus, select:focus, button:focus-visible {
+    outline: 3px solid var(--primary); outline-offset: 2px;
+  }
+  select { cursor: pointer; }
+
+  /* --- Knöpfe: rund, mindestens 50px hoch --- */
+  button {
+    font-family: inherit; font-size: 17px; font-weight: 600;
+    color: var(--on); background: var(--surface-2);
+    border: 2px solid var(--outline);
+    border-radius: var(--radius);
+    padding: 12px 26px; min-height: 50px;
+    cursor: pointer;
+  }
+  button:hover { background: #2F2C36; border-color: var(--outline-2); }
+  button.primary {
+    background: var(--primary); color: #381E72; border-color: var(--primary);
+    padding: 14px 34px;
+  }
+  button.primary:hover { background: #EADDFF; }
+  button.small { font-size: 15px; padding: 8px 18px; min-height: 44px; }
+
+  /* --- Pfadfeld: bricht um statt abzuschneiden --- */
+  .pfad {
+    display: flex; gap: 12px; align-items: stretch;
+  }
+  .pfad input { flex: 1; overflow-wrap: anywhere; }
+
+  /* --- Regelliste --- */
+  .liste { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+  .eintrag {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--surface); border: 2px solid var(--outline);
+    border-radius: 14px; padding: 12px 16px;
+  }
+  .eintrag .was { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .chip {
+    display: inline-block; font-size: 14px; font-weight: 600;
+    background: rgba(208, 188, 255, .16); color: var(--primary);
+    border-radius: var(--radius); padding: 4px 14px; margin-right: 8px;
+  }
+  .leer { color: var(--on-dim); font-size: 16px; padding: 10px 0; }
+
+  /* --- Werkzeugkacheln --- */
+  .werkzeug {
+    display: flex; align-items: center; gap: 16px;
+    background: var(--surface); border: 2px solid var(--outline);
+    border-radius: 16px; padding: 16px 18px; margin-bottom: 12px;
+  }
+  .werkzeug .sym {
+    font-size: 26px; color: var(--primary);
+    min-width: 40px; text-align: center;
+  }
+  .werkzeug .was { flex: 1; min-width: 0; }
+  .werkzeug .was b { font-size: 18px; display: block; }
+  .werkzeug .was span {
+    font-size: 14px; color: var(--on-dim);
+    overflow-wrap: anywhere;
+  }
+  .werkzeug button { flex: 0 0 auto; }
+
+  /* --- Fusszeile --- */
+  .fuss {
+    flex: 0 0 auto; display: flex; gap: 14px; align-items: center;
+    padding: 18px 30px; border-top: 1px solid var(--outline);
+    background: var(--surface);
+  }
+  .meldung { flex: 1; font-size: 16px; color: var(--on-dim); min-width: 0; }
+
+  /* --- Meldung oben, damit sie beim Scrollen nicht weg ist --- */
+  .banner {
+    padding: 12px 30px; font-size: 16px;
+    background: rgba(208, 188, 255, .14); color: var(--primary);
+    border-bottom: 1px solid var(--outline);
+    display: none;
+  }
+  .banner.an { display: block; }
+
+  /* Kein heller grauer Scrollbalken */
+  ::-webkit-scrollbar { width: 14px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--outline); border-radius: 7px;
+    border: 3px solid var(--bg);
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--outline-2); }
+  * { scrollbar-width: thin; scrollbar-color: var(--outline) transparent; }
+</style>
+</head>
+<body>
+
+<div class="banner" id="banner"></div>
+
+<div class="top">
+  <h1 id="titel">Einstellungen</h1>
+</div>
+
+<div class="body">
+
+  <section>
+    <h2 id="l-sprache">Sprache</h2>
+    <div class="row">
+      <div class="row-label"><b>Deutsch / English</b></div>
+      <select id="sprache" style="max-width: 260px">
+        <option value="de">Deutsch</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+  </section>
+
+  <section>
+    <h2 id="l-downloads">Download-Ordner</h2>
+    <div class="row">
+      <div class="row-label">
+        <b id="l-min_age">Wartezeit für neue Dateien (Sekunden)</b>
+        <span class="hint">Dateien, die gerade geschrieben werden, bleiben liegen.</span>
+      </div>
+      <input type="number" id="min-age" min="0" max="3600"
+             style="max-width: 150px" aria-label="Wartezeit">
+    </div>
+    <div class="row">
+      <div class="row-label"><b id="l-pfad-hinweis">Ordner</b></div>
+    </div>
+    <div class="pfad">
+      <input type="text" id="downloads" readonly aria-label="Download-Ordner">
+      <button id="btn-ordner" class="small">…</button>
+    </div>
+  </section>
+
+  <section>
+    <h2 id="l-regeln">Eigene Regeln</h2>
+    <p class="hint" id="l-hinweis-regeln"></p>
+
+    <div class="row">
+      <div style="min-width: 150px">
+        <label id="l-art">Art</label>
+        <select id="art">
+          <option value="endung">Dateiendung</option>
+          <option value="muster">Dateiname</option>
+        </select>
+      </div>
+      <div style="flex: 1; min-width: 180px">
+        <label id="l-wert">Wert</label>
+        <input type="text" id="wert" placeholder=".xyz">
+      </div>
+      <div style="min-width: 170px">
+        <label id="l-ziel">Zielordner</label>
+        <select id="ziel"></select>
+      </div>
+      <button id="btn-regel" class="primary small" style="align-self: flex-end">
+        <span id="l-hinzu">Hinzufügen</span>
+      </button>
+    </div>
+
+    <div class="liste" id="regeln"></div>
+  </section>
+
+  <section>
+    <h2 id="l-werkzeuge">Werkzeuge</h2>
+    <p class="hint" id="l-werkzeug-hinweis">
+      Ein Werkzeug ist ein Ordner mit einer __init__.py.
+    </p>
+    <div id="werkzeuge"></div>
+    <button id="btn-werkzeug" class="small">
+      <span id="l-werkzeug-hinzu">Werkzeug hinzufügen</span>
+    </button>
+  </section>
+
+</div>
+
+<div class="fuss">
+  <div class="meldung" id="meldung"></div>
+  <button id="btn-zurueck" class="small"><span id="l-zurueck">Zurück</span></button>
+  <button id="btn-speichern" class="primary">
+    <span id="l-speichern">Speichern und schließen</span>
+  </button>
+</div>
+
+<script>
+var D = { sprache: 'de', t: {} };
+var API = null;
+
+function sag(key, fallback) {
+  return (D.t && D.t[key]) || fallback || key;
+}
+
+function el(tag, klasse, inhalt) {
+  var e = document.createElement(tag);
+  if (klasse) { e.className = klasse; }
+  if (inhalt !== undefined && inhalt !== null) { e.textContent = inhalt; }
+  return e;
+}
+
+function setze(id, wert) {
+  var e = document.getElementById(id);
+  if (e) { e.textContent = wert; }
+}
+
+function sagt(key, elementId) {
+  setze(elementId, sag(key));
+}
+
+/* Jede Beschriftung an ihre Stelle. */
+function uebersetze() {
+  document.documentElement.lang = D.sprache;
+  sagt('einstellungen.titel', 'titel');
+  sagt('einstellungen.sprache', 'l-sprache');
+  sagt('einstellungen.downloads', 'l-downloads');
+  sagt('einstellungen.min_age', 'l-min_age');
+  sagt('einstellungen.pfad_hinweis', 'l-pfad-hinweis');
+  sagt('einstellungen.regeln', 'l-regeln');
+  sagt('einstellungen.hinweis_regeln', 'l-hinweis-regeln');
+  sagt('einstellungen.ziel', 'l-ziel');
+  sagt('einstellungen.hinzu', 'l-hinzu');
+  sagt('einstellungen.werkzeuge', 'l-werkzeuge');
+  sagt('einstellungen.werkzeug_hinzu', 'l-werkzeug-hinzu');
+  sagt('einstellungen.speichern', 'l-speichern');
+  sagt('einstellungen.zurueck', 'l-zurueck');
+  document.getElementById('btn-ordner').title = sag('einstellungen.ordner_waehlen');
+  document.getElementById('btn-ordner').setAttribute('aria-label',
+      sag('einstellungen.ordner_waehlen'));
+  document.getElementById('btn-werkzeug').title = sag('einstellungen.werkzeug_ordner');
+}
+
+function meldung(text, art) {
+  var b = document.getElementById('banner');
+  var m = document.getElementById('meldung');
+  if (text) {
+    b.textContent = text;
+    b.classList.add('an');
+    m.textContent = text;
+  } else {
+    b.classList.remove('an');
+    m.textContent = '';
+  }
+}
+
+/* --- Regel hinzufuegen / entfernen --- */
+function zeichneRegeln(regeln) {
+  var box = document.getElementById('regeln');
+  box.innerHTML = '';
+  if (!regeln || !regeln.length) {
+    box.appendChild(el('div', 'leer', sag('einstellungen.leer')));
+    return;
+  }
+  regeln.forEach(function (r) {
+    var zeile = el('div', 'eintrag');
+
+    var was = el('div', 'was');
+    was.appendChild(el('span', 'chip',
+        r.art === 'muster' ? sag('einstellungen.muster') : sag('einstellungen.endung')));
+    was.appendChild(document.createTextNode(r.wert + '  →  ' + r.ziel));
+    zeile.appendChild(was);
+
+    var weg = el('button', 'small', sag('einstellungen.entfernen'));
+    weg.onclick = function () {
+      API.settings_remove_rule(r.art, r.wert).then(function (res) {
+        meldung(res && res.ok ? sag('einstellungen.regel_gueltig') : '');
+        zeichneRegeln(res ? res.regeln : regeln);
+      });
+    };
+    zeile.appendChild(weg);
+    box.appendChild(zeile);
+  });
+}
+
+/* --- Werkzeuge --- */
+function zeichneWerkzeuge(daten) {
+  var box = document.getElementById('werkzeuge');
+  box.innerHTML = '';
+
+  (daten.mitgeliefert || []).forEach(function (w) {
+    box.appendChild(werkzeugKachel(w, false));
+  });
+  (daten.eigene_werkzeuge || []).forEach(function (w) {
+    box.appendChild(werkzeugKachel(w, true));
+  });
+  if (!(daten.mitgeliefert || []).length && !(daten.eigene_werkzeuge || []).length) {
+    box.appendChild(el('div', 'leer', sag('einstellungen.leer')));
+  }
+}
+
+function werkzeugKachel(w, eigen) {
+  var kachel = el('div', 'werkzeug');
+  kachel.appendChild(el('div', 'sym', eigen ? '＋' : '✓'));
+
+  var was = el('div', 'was');
+  was.appendChild(el('b', null, w.name));
+  was.appendChild(el('span', null, eigen ? w.pfad : sag('einstellungen.mitgeliefert')));
+  kachel.appendChild(was);
+
+  if (eigen) {
+    var weg = el('button', 'small', sag('einstellungen.entfernen'));
+    weg.onclick = function () {
+      API.settings_remove_tool(w.pfad).then(function (res) {
+        meldung(res && res.ok ? sag('einstellungen.werkzeug_ok') : '');
+        laden();
+      });
+    };
+    kachel.appendChild(weg);
+  }
+  return kachel;
+}
+
+/* --- Zielordner fuellen --- */
+function fuelleZiele(ordner) {
+  var auswahl = document.getElementById('ziel');
+  var alt = auswahl.value;
+  auswahl.innerHTML = '';
+  (ordner || []).forEach(function (o) {
+    var opt = document.createElement('option');
+    opt.value = o; opt.textContent = o;
+    auswahl.appendChild(opt);
+  });
+  if (alt) { auswahl.value = alt; }
+}
+
+/* --- Alles laden und anzeigen --- */
+function laden() {
+  return API.settings_read().then(function (d) {
+    D = d;
+    D.t = d.texte || {};
+    uebersetze();
+
+    document.getElementById('sprache').value = d.language;
+    document.getElementById('downloads').value = d.downloads_folder || '';
+    document.getElementById('min-age').value = d.downloads_min_age;
+    fuelleZiele(d.ordner);
+    zeichneRegeln(d.regeln);
+    zeichneWerkzeuge({
+      mitgeliefert: d.tools_mitgeliefert || [],
+      eigene_werkzeuge: d.eigene_werkzeuge || []
+    });
+    return d;
+  });
+}
+
+/* --- Knöpfe --- */
+function verdrahte() {
+  document.getElementById('sprache').onchange = function () {
+    API.settings_set_language(this.value).then(function () { return laden(); });
+  };
+
+  document.getElementById('btn-ordner').onclick = function () {
+    API.settings_pick_folder().then(function (pfad) {
+      if (!pfad) { return; }
+      document.getElementById('downloads').value = pfad;
+      API.settings_set_downloads(pfad).then(function (res) {
+        meldung(res && res.ok ? '' : sag('einstellungen.fehler_ordner'));
+      });
+    });
+  };
+
+  document.getElementById('min-age').onchange = function () {
+    API.settings_set_min_age(this.value);
+  };
+
+  document.getElementById('btn-regel').onclick = function () {
+    var art = document.getElementById('art').value;
+    var wert = document.getElementById('wert').value;
+    var ziel = document.getElementById('ziel').value;
+    API.settings_add_rule(art, wert, ziel).then(function (res) {
+      if (res && res.ok) {
+        document.getElementById('wert').value = '';
+        meldung(sag('einstellungen.regel_gueltig'));
+        zeichneRegeln(res.regeln);
+      } else {
+        meldung(sag('einstellungen.regel_fehlt'));
+      }
+    });
+  };
+
+  document.getElementById('btn-werkzeug').onclick = function () {
+    API.settings_pick_tool_folder().then(function (pfad) {
+      if (!pfad) { return; }
+      API.settings_add_tool(pfad).then(function (res) {
+        meldung(res && res.ok ? sag('einstellungen.werkzeug_ok')
+                              : (res && res.fehler) || '');
+        laden();
+      });
+    });
+  };
+
+  document.getElementById('btn-speichern').onclick = function () {
+    window.close();
+  };
+  document.getElementById('btn-zurueck').onclick = function () {
+    window.close();
+  };
+}
+
+/* --- Start --- */
+
+/* pywebview haengt die API NICHT als globales `API` ein, sondern unter
+   window.pywebview.api. Ohne dieses Warten bleibt das Fenster leer. */
+function bereit() {
+  return new Promise(function (resolve) {
+    if (window.pywebview && window.pywebview.api) {
+      return resolve(window.pywebview.api);
+    }
+    var versuche = 0;
+    var t = setInterval(function () {
+      versuche++;
+      if (window.pywebview && window.pywebview.api) {
+        clearInterval(t);
+        resolve(window.pywebview.api);
+      } else if (versuche > 60) {
+        clearInterval(t);
+        resolve(null);
+      }
+    }, 250);
+  });
+}
+
+function starten() {
+  bereit().then(function (api) {
+    API = api;
+    if (!api) {
+      meldung('pywebview nicht verfuegbar');
+      return;
+    }
+    laden().then(verdrahte);
+  });
+}
+
+window.addEventListener('DOMContentLoaded', starten);
+</script>
+</body>
+</html>

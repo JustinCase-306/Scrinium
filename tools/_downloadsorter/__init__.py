@@ -32,11 +32,28 @@ from logik.regeln import (                    # noqa: E402
     last_run,
     undo_run,
     Run,
+    CATEGORIES,
 )
 
 # Alles, was der Kern zum Finden braucht:
 NAME = "Downloads-Sortierer"
 BETA = False
+
+
+# ---------------------------------------------------------------------------
+# Was der Rahmen braucht, um die Einstellungen zu fuellen
+# ---------------------------------------------------------------------------
+def categories() -> list:
+    """Die Zielordner, in die dieses Werkzeug einsortieren kann.
+
+    Das Einstellungsfenster fragt danach, damit der Nutzer bei einer
+    eigenen Regel einen echten Zielordner waehlen kann. Ohne das
+    gaebe es nur eine leere Auswahl.
+
+    Bewusst zurueckgegeben und nicht in settings.py erfunden - der
+    Rahmen kennt die Ordner nicht, das Werkzeug schon.
+    """
+    return list(CATEGORIES)
 
 
 # ---------------------------------------------------------------------------
