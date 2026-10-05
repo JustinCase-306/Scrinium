@@ -54,10 +54,36 @@ def base_dir() -> str:
 
 
 def tools_dir() -> str:
-    """Der Ordner mit den Werkzeugen."""
-    path = os.path.join(base_dir(), "tools")
-    os.makedirs(path, exist_ok=True)
-    return path
+    """Der Ordner mit den mitgelieferten Werkzeugen.
+
+    Drei Orte, in dieser Reihenfolge:
+
+    1. `_MEIPASS/tools` - dort landen die Daten in der gepackten EXE.
+       `sys._MEIPASS` ist das Verzeichnis, das PyInstaller beim Start
+       entpackt. `base_dir()` zeigt bei einer onefile-EXE auf den Ordner
+       NEBEN der EXE und traf diesen Pfad nicht - deshalb war die
+       Seitenleiste im fertigen Programm leer ("noch nicht da").
+    2. `tools/` neben der EXE - so kann man Werkzeuge nachtragen, ohne
+       die EXE neu zu bauen.
+    3. `tools/` im Projektordner - der Fall waehrend der Entwicklung.
+    """
+    kandidaten = []
+    if getattr(sys, "frozen", False):
+        meipass = getattr(sys, "_MEIPASS", None)
+        if meipass:
+            kandidaten.append(os.path.join(meipass, "tools"))
+        kandidaten.append(os.path.join(os.path.dirname(sys.executable),
+                                       "tools"))
+    kandidaten.append(os.path.join(base_dir(), "tools"))
+
+    for pfad in kandidaten:
+        if os.path.isdir(pfad):
+            return pfad
+
+    # Keiner da: den entwicklernahen anlegen, damit "Werkzeug
+    # hinzufuegen" ein Ziel hat.
+    os.makedirs(kandidaten[-1], exist_ok=True)
+    return kandidaten[-1]
 
 
 # ---------------------------------------------------------------------------

@@ -22,7 +22,6 @@ from __future__ import annotations
 import json
 import os
 import sys
-import threading
 from . import core, texts
 from .settings import Settings, _standard_downloads
 ZUSTAND = {'tools': [], 'settings': {}, 'running': None, 'result': None}
@@ -103,43 +102,46 @@ def choose_folder(auswahl: bool = False) -> str:
     Pfad erst anzeigen, damit der Nutzer ihn bestaetigen kann. Ohne
     `auswahl` wird er direkt als Download-Ordner uebernommen.
 
-    Muss im Hauptthread laufen, sonst blockiert Windows den Dialog.
+    `create_file_dialog` gibt SYNCHRON ein Tupel zurueck. Es gibt keinen
+    Callback-Parameter: ein solches Argument wirft TypeError, und weil
+    das JavaScript kein .catch() hat, tat der Knopf danach einfach
+    nichts. Deshalb hier der direkte Rueckgabewert.
     """
     import webview
 
-    def zurueck(result):
-        ZUSTAND['_folder_choice'] = result[0] if result else ''
     fenster = _window()
     if fenster is None:
         return ''
-    # FileDialog.FOLDER, nicht OPEN_DIALOG + directory_only - Letzteres
-    # gibt es in pywebview 6 nicht und laesst den Knopf abstuerzen.
-    fenster.create_file_dialog(webview.FileDialog.FOLDER, func=zurueck)
-    for _ in range(600):
-        if '_folder_choice' in ZUSTAND:
-            path = ZUSTAND.pop('_folder_choice')
-            if path and not auswahl:
-                set_downloads_folder(path)
-            return path or ''
-        threading.Event().wait(0.1)
-    return ''
+
+    try:
+        gewaehlt = fenster.create_file_dialog(webview.FileDialog.FOLDER)
+    except Exception:
+        return ''
+
+    path = (gewaehlt[0] if gewaehlt else '') or ''
+    if path and not auswahl:
+        set_downloads_folder(path)
+    return path
 
 
 def choose_tool_folder() -> str:
-    """Ordnerdialog fuer ein neues Werkzeug. Speichert nichts."""
+    """Ordnerdialog fuer ein neues Werkzeug. Speichert nichts.
+
+    Gleiche pywebview-Falle wie in `choose_folder`: der Dialog gibt
+    synchron ein Tupel zurueck, einen Callback-Parameter gibt es nicht.
+    """
     import webview
 
-    def zurueck(result):
-        ZUSTAND['_tool_choice'] = result[0] if result else ''
     fenster = _window()
     if fenster is None:
         return ''
-    fenster.create_file_dialog(webview.FileDialog.FOLDER, func=zurueck)
-    for _ in range(600):
-        if '_tool_choice' in ZUSTAND:
-            return ZUSTAND.pop('_tool_choice') or ''
-        threading.Event().wait(0.1)
-    return ''
+
+    try:
+        gewaehlt = fenster.create_file_dialog(webview.FileDialog.FOLDER)
+    except Exception:
+        return ''
+
+    return (gewaehlt[0] if gewaehlt else '') or ''
 
 
 # ---------------------------------------------------------------------------

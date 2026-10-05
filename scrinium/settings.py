@@ -24,8 +24,6 @@ import re
 import tempfile
 from dataclasses import dataclass, field, asdict
 
-from .core import base_dir
-
 CONFIG_NAME = "config.json"
 
 

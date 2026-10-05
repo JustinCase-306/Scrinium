@@ -316,6 +316,29 @@
 </div>
 
 <script>
+// Ein abgelehntes Promise ohne .catch() ist STUMM - genau deshalb sah
+// "es geht nichts" nach einem toten Knopf aus, obwohl Python eine
+// Ausnahme geworfen hatte (z.B. TypeError bei create_file_dialog).
+// Dieser Handler macht solche Fehler sichtbar statt sie zu verschlucken.
+window.addEventListener('unhandledrejection', function (ev) {
+  var grund = ev.reason && (ev.reason.message || ev.reason) || 'unbekannt';
+  console.error('Scrinium: Promise abgelehnt -', grund);
+  try {
+    var box = document.getElementById('fehler-box');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'fehler-box';
+      box.setAttribute('role', 'alert');
+      box.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;'
+        + 'padding:10px 14px;border-radius:8px;background:#5a1f1f;'
+        + 'color:#ffd9d9;font:13px/1.4 system-ui,sans-serif;z-index:9999;'
+        + 'border:1px solid #ff6b6b';
+      document.body.appendChild(box);
+    }
+    box.textContent = 'Fehler: ' + grund;
+  } catch (e) { /* die Konsole hat es schon */ }
+});
+
 // ═══════════════════════════════════════════════════════════
 //  Scrinium - Verbindung zum Python-Kern
 // ═══════════════════════════════════════════════════════════
@@ -389,7 +412,7 @@ var scrinium = (function () {
 
   var T = TEXTE.de;
   function language() {
-    return (STATE.settings && STATE.settings.sprache === 'en') ? 'en' : 'de';
+    return (STATE.settings && STATE.settings.language === 'en') ? 'en' : 'de';
   }
   function sag(k) { return (TEXTE[language()] || TEXTE.de)[k] || k; }
 
