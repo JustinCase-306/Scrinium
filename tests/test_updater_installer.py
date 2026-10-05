@@ -9,10 +9,12 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 
 import pytest
 
 from scrinium import installer as I
+from scrinium import platform_win as P
 from scrinium import updater as U
 
 
@@ -140,6 +142,61 @@ def test_install_copies_exe(payload, tmp_path, monkeypatch):
     target = str(tmp_path / "Programs" / "Scrinium")
     assert I.install(payload, target, launch=False) == 0
     assert os.path.exists(os.path.join(target, "Scrinium.exe"))
+
+
+# --- autostart -------------------------------------------------------------
+# Regression: autostart_command() used sys.executable, which is
+# Scrinium-Setup.exe while the installer runs. Windows would then start
+# the *installer* on every logon. The autostart entry must name the
+# installed app, never the running process.
+def test_autostart_command_uses_given_exe():
+    assert P.autostart_command(r"C:\Test\Scrinium.exe") == \
+        '"C:\\Test\\Scrinium.exe"'
+
+
+def test_autostart_command_makes_relative_paths_absolute():
+    cmd = P.autostart_command("Scrinium.exe")
+    assert cmd.endswith('Scrinium.exe"') and ":" in cmd, cmd
+
+
+def test_install_registers_the_installed_app(payload, tmp_path, monkeypatch):
+    monkeypatch.setenv("APPDATA", str(tmp_path / "appdata"))
+    registered = {}
+    monkeypatch.setattr(
+        P, "set_autostart",
+        lambda enabled, exe=None: registered.update(enabled=enabled, exe=exe) or True)
+    target = str(tmp_path / "Programs" / "Scrinium")
+    assert I.install(payload, target, launch=False) == 0
+
+    assert registered["enabled"] is True
+    # The exe must be the *installed* file, not sys.executable.
+    assert registered["exe"] == os.path.join(target, "Scrinium.exe")
+    assert os.path.isfile(registered["exe"])
+
+
+def test_install_never_registers_the_installer(payload, tmp_path, monkeypatch):
+    """The whole point: Scrinium-Setup.exe must not end up in the Run key.
+
+    Captures what set_autostart is *actually called with*, then compares
+    it against what would have been written before the fix.
+    """
+    monkeypatch.setenv("APPDATA", str(tmp_path / "appdata"))
+    captured = {}
+    monkeypatch.setattr(
+        P, "set_autostart",
+        lambda enabled, exe=None: captured.update(enabled=enabled, exe=exe) or True)
+    target = str(tmp_path / "Programs" / "Scrinium")
+    I.install(payload, target, launch=False)
+
+    from scrinium import installer
+    if getattr(installer.sys, "frozen", False):
+        pytest.skip("packaged installer: sys.executable is Scrinium-Setup.exe")
+
+    # Before the fix, install() passed no exe at all and the Run key got
+    # autostart_command() - i.e. sys.executable, the installer.
+    assert captured["exe"] is not None, "install() must pass an explicit exe"
+    assert captured["exe"] != os.path.abspath(sys.executable)
+    assert captured["exe"] == os.path.join(target, "Scrinium.exe")
 
 
 def test_install_is_repeatable(payload, tmp_path, monkeypatch):
