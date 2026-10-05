@@ -27,11 +27,14 @@ def main():
     from scrinium import monitors as M
     from scrinium import window as W
 
-    bildschirme = M.alle_monitore()
-    for i, m in enumerate(bildschirme, 1):
+    # Die Reihenfolge von alle_monitore() ist nicht die Bildschirmnummer -
+    # deshalb wird hier nach der Position sortiert, nicht nach dem Index.
+    for i, m in enumerate(sorted(M.alle_monitore(),
+                                 key=lambda a: a["work"][0]), 1):
         x, y, r, u = m["work"]
-        print(f"Monitor {i} {'PRIMÄR' if m['primary'] else 'sekundär'}: "
-              f"({x}, {y}) bis ({r}, {u}) = {r - x} x {u - y}")
+        art = "PRIMÄR (dein Arbeitsmonitor)" if m["primary"] else "sekundär"
+        print(f"Monitor {i} [{art}]: ({x}, {y}) bis ({r}, {u}) "
+              f"= {r - x} x {u - y}")
 
     x, y = M.start_auf_zweiten_monitor(BREITE, HOEHE)
     if (x, y) == (0, 0):
@@ -43,10 +46,9 @@ def main():
         return 1
 
     print()
-    print(f"Fenster: ({x}, {y}), {BREITE} x {HOEHE} — auf Monitor 2")
+    print(f"Fenster: ({x}, {y}), {BREITE} x {HOEHE} auf Monitor 2.")
     print("Schliessen zum Beenden.")
-    print(f"Exitcode: {W.starten(x=x, y=y, breite=BREITE, hoehe=HOEHE)}")
-    return 0
+    return W.starten(x=x, y=y, breite=BREITE, hoehe=HOEHE, fokus=False)
 
 
 if __name__ == "__main__":

@@ -101,12 +101,16 @@ def _mittig(breite: int, hoehe: int) -> tuple:
 
 
 def starten(x: int | None = None, y: int | None = None,
-            breite: int = 1280, hoehe: int = 820) -> int:
+            breite: int = 1280, hoehe: int = 820,
+            fokus: bool = True) -> int:
     """Oeffnet das Fenster. Gibt einen Exitcode zurueck.
 
-    `x`/`y` setzen die Position. Negative Werte sind erlaubt - so liegen
-    Monitore links oder oberhalb vom primaeren. Ohne Position startet
-    das Fenster mittig, wie Windows es fuer neue Fenster macht.
+    `x`/`y` setzen die Position; negative Werte sind erlaubt, weil
+    Monitore auch links oder oberhalb liegen koennen. Ohne Position
+    startet das Fenster mittig auf dem primaeren Monitor.
+
+    `fokus=False` startet ohne den Eingabefokus zu nehmen - noetig,
+    wenn der Nutzer gerade an einem anderen Bildschirm arbeitet.
     """
     if not webview2_present():
         # Kein Fenster moeglich: die CLI funktioniert trotzdem.
@@ -133,20 +137,18 @@ def starten(x: int | None = None, y: int | None = None,
 
     # Ohne Position: mittig auf dem primaeren Monitor. pywebview kann das
     # nicht selbst, aber Windows kann es - easygui nicht, also rechnen.
-    pos = None
-    if x is not None and y is not None:
-        pos = (int(x), int(y))
-    else:
-        pos = _mittig(breite, hoehe)
+    if x is None or y is None:
+        x, y = _mittig(breite, hoehe)
 
     fenster = webview.create_window(
         "Scrinium", html,
         js_api=api,
         width=breite, height=hoehe,
+        x=int(x), y=int(y),          # negative Werte = Monitor links
         min_size=(900, 620),
         background_color="#141218",
         text_select=False,
-        **({"pos": pos} if pos else {}),
+        focus=bool(fokus),            # sonst nimmt das Fenster den Fokus
     )
     bridge.set_window(fenster)
 
