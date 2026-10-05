@@ -117,7 +117,9 @@ def install(source_exe: str, target_dir: str = DEFAULT_DIR,
     try:
         from scrinium import platform_win as P
 
-        P.set_autostart(True)
+        # Register `dest`, never sys.executable - that is the installer
+        # itself, and Windows would run the installer on every logon.
+        P.set_autostart(True, exe=dest)
         if not quiet:
             log("Autostart registered.")
     except Exception as exc:

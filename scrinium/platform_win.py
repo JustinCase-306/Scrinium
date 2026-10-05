@@ -60,8 +60,16 @@ class SingleInstance:
 # ---------------------------------------------------------------------------
 # autostart (HKCU Run key - no admin rights needed)
 # ---------------------------------------------------------------------------
-def autostart_command() -> str:
-    """The command Windows should run to start Scrinium."""
+def autostart_command(exe: str | None = None) -> str:
+    """The command Windows should run to start Scrinium.
+
+    `exe` overrides which binary gets registered. That matters because
+    `sys.executable` is the *installer* when installer.py runs - without
+    an override the autostart entry would point at Scrinium-Setup.exe and
+    Windows would run the installer on every logon.
+    """
+    if exe:
+        return f'"{os.path.abspath(exe)}"'
     if getattr(sys, "frozen", False):
         return f'"{sys.executable}"'
     script = os.path.abspath(sys.argv[0])
@@ -84,7 +92,8 @@ def is_autostart_enabled() -> bool:
         return False
 
 
-def set_autostart(enabled: bool) -> bool:
+def set_autostart(enabled: bool, exe: str | None = None) -> bool:
+    """Enable or disable autostart. `exe` = which binary to register."""
     if not IS_WINDOWS:
         return False
     try:
@@ -95,7 +104,7 @@ def set_autostart(enabled: bool) -> bool:
                             winreg.KEY_SET_VALUE) as k:
             if enabled:
                 winreg.SetValueEx(k, "Scrinium", 0, winreg.REG_SZ,
-                                  autostart_command())
+                                  autostart_command(exe))
             else:
                 try:
                     winreg.DeleteValue(k, "Scrinium")
