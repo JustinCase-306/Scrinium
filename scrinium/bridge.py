@@ -197,19 +197,21 @@ def _ordner_von_tool(w) -> list:
 
 
 def settings_texts(sprache: str) -> dict:
-    """Alle Beschriftungen des Einstellungsfensters."""
+    """Alle Beschriftungen des Einstellungsfensters.
+
+    Frueher stand hier eine fest verdrahtete Liste von Schluesseln. Die
+    war veraltet: `settings.html` fragte nach Texten, die nicht darin
+    standen, und `sag()` gibt dann den Schluessel selbst zurueck. Im
+    Fenster stand deshalb "einstellungen.hinweis_regeln" statt
+    "Eigene Regeln".
+
+    Jetzt wird alles ausgeliefert, was mit `einstellungen.` beginnt.
+    Eine neue Beschriftung braucht damit nur noch einen Eintrag in der
+    Sprachdatei - keine Aenderung hier.
+    """
     texts.set_language(sprache)
-    keys = ("einstellungen.titel", "einstellungen.sprache",
-            "einstellungen.downloads", "einstellungen.ordner_waehlen",
-            "einstellungen.regeln", "einstellungen.regel_neu",
-            "einstellungen.endung", "einstellungen.muster",
-            "einstellungen.ziel", "einstellungen.werkzeuge",
-            "einstellungen.werkzeug_hinzu", "einstellungen.speichern",
-            "einstellungen.zurueck", "einstellungen.min_age",
-            "einstellungen.entfernen", "einstellungen.leer",
-            "einstellungen.ok", "einstellungen.abbruch",
-            "einstellungen.neu", "einstellungen.werkzeug_ordner")
-    return {k: texts.sag(k) for k in keys}
+    return {k: texts.sag(k) for k in texts.all_keys()
+            if k.startswith("einstellungen.")}
 
 
 # --- Aenderungen -----------------------------------------------------------

@@ -368,6 +368,61 @@ def test_language_field_has_a_visible_arrow():
         "der Pfeil ist kein Dreieck - dann braucht er eine Schrift")
 
 
+def test_every_settings_label_exists_and_is_delivered():
+    """Regression: im Einstellungsfenster standen rohe Schluessel.
+
+    `settings_texts()` lieferte nur eine fest verdrahtete Liste von 20
+    Schluesseln; `settings.html` fragte nach mehr. `sag()` gibt dann den
+    Schluessel selbst zurueck - im Fenster stand
+    "einstellungen.hinweis_regeln" statt "Eigene Regeln".
+
+    Geprueft wird beides: der Schluessel steht in den Sprachdateien UND
+    `settings_texts()` liefert ihn auch aus.
+    """
+    from scrinium import bridge, texts
+
+    js = js_teil("settings.html")
+    gefordert = sorted(set(re.findall(
+        r"sag[st]?\(['\"]((?:einstellungen|fenster)\.[\w.]+)", js)))
+    assert gefordert, "keine Textschluessel in settings.html gefunden"
+
+    alle = set(texts.all_keys())
+    fehlend = [k for k in gefordert if k not in alle]
+    assert not fehlend, (
+        f"diese Schluessel fehlen in den Sprachdateien und erscheinen im "
+        f"Fenster als roher Text: {fehlend}")
+
+    for sprache in ("de", "en"):
+        geliefert = bridge.settings_texts(sprache)
+        nicht_geliefert = [k for k in gefordert if k not in geliefert]
+        assert not nicht_geliefert, (
+            f"{sprache}: settings_texts liefert diese Schluessel nicht: "
+            f"{nicht_geliefert}")
+
+
+def test_language_files_have_the_same_keys():
+    """Beide Sprachen muessen dieselben Schluessel haben.
+
+    Fehlt einer, zeigt das Fenster bei dieser Sprache den rohen
+    Schluessel - und nur bei dieser, was leicht uebersehen wird.
+    """
+    import importlib
+
+    def schluessel(sprache: str) -> set:
+        modul = importlib.import_module(f"scrinium.sprache.{sprache}")
+        for name in dir(modul):
+            wert = getattr(modul, name)
+            if isinstance(wert, dict) and wert and all(
+                    isinstance(k, str) for k in wert):
+                return set(wert)
+        return set()
+
+    de, en = schluessel("de"), schluessel("en")
+    assert de, "keine Texte in de.py gefunden"
+    assert de == en, (
+        f"nur in de: {sorted(de - en)}; nur in en: {sorted(en - de)}")
+
+
 def test_tools_dir_finds_the_bundled_sorter():
     """Im Quellcode muss das mitgelieferte Werkzeug gefunden werden."""
     from scrinium import core
