@@ -132,18 +132,13 @@ def test_describe_translations():
 # --- installer -------------------------------------------------------------
 @pytest.fixture
 def payload(tmp_path, monkeypatch):
-    r"""Eine Fake-EXE - und ein Autostart, der nirgends landet.
+    """Fake-EXE plus ein Autostart, der nirgends landet.
 
-    `install()` schreibt sonst in die echte Registry und damit in den
-    Autostart des Nutzers. Genau das ist passiert: nach einem Testlauf
-    zeigte HKCU\...\Run auf
-    `Temp\pytest-of-Friedrich\pytest-72\...\Scrinium.exe`. Beim
-    naechsten Anmelden startet Windows einen Ordner, den es nicht mehr
-    gibt.
-
-    Der Mock haengt am Fixture-Funktionsparameter `monkeypatch`, den
-    pytest nach jedem Test zuruecksetzt. Wer install() ohne dieses
-    Fixture aufruft, hat wieder denselben Fehler.
+    `install()` schreibt sonst in HKCU\\...\\Run. Vier Tests taten das
+    ohne Mock, und danach zeigte der Autostart des Nutzers auf
+    `Temp\\pytest-of-Friedrich\\pytest-72\\...` - ein Ordner, den es beim
+    naechsten Anmelden nicht mehr gibt. Der Mock haengt an
+    `monkeypatch` und ist nach jedem Test zurueckgesetzt.
     """
     monkeypatch.setattr(P, "set_autostart", lambda enabled, exe=None: True)
     p = tmp_path / "Scrinium.exe"
@@ -216,44 +211,27 @@ def test_install_never_registers_the_installer(payload, tmp_path, monkeypatch):
 def test_only_the_payload_fixture_touches_the_registry(tmp_path, monkeypatch):
     """install() schreibt in HKCU\\...\\Run - das darf kein Test tun.
 
-    `test_reinstall_leaves_no_backup_behind` rief install() ohne Mock
-    auf. Ergebnis nach dem Testlauf:
+    Ohne den Mock im `payload`-Fixture zeigte der Autostart des Nutzers
+    nach einem Testlauf auf `Temp\\pytest-of-Friedrich\\pytest-72\\...`,
+    einen Ordner, den es beim naechsten Anmelden nicht mehr gibt.
 
-        HKCU\\...\\Run = "...\\Temp\\pytest-of-Friedrich\\pytest-72\\
-        ...\\Scrinium.exe"
-
-    Beim naechsten Anmelden startet Windows einen Ordner, den es nicht
-    mehr gibt. Der Nutzer hat das nach einem Neustart gemerkt.
-
-    Dieser Test kann install() nicht verbieten - der schreibt ganz
-    sicher in die Registry, das ist sein Zweck. Er kann nur festhalten,
-    DASS es passiert, damit die Absicht dokumentiert ist und niemand
-    den Mock im `payload`-Fixture entfernt, ohne es zu merken.
-
-    Geprueft wird: `P.set_autostart` ist im normalen Testlauf gemockt
-    (siehe Fixture), und der Pfad, der registriert wuerde, ist einer
-    aus tmp_path - also ein Wegwerf-Ordner, den man nicht benutzen
-    kann.
+    install() selbst schreibt ganz sicher in die Registry - das ist
+    sein Zweck. Dieser Test haelt nur fest, was registriert wuerde,
+    damit niemand den Mock entfernt, ohne es zu merken.
     """
     exe = tmp_path / "Scrinium.exe"
     exe.write_bytes(b"MZ" + b"\x00" * 500)
     monkeypatch.setenv("APPDATA", str(tmp_path / "appdata"))
 
     erfasst = {}
-    # Absichtlich OHNE Mock - das ist der Fall, den es zu verhindern
-    # gilt. Wir fangen nur ab, was registriert wuerde.
-    original = P.set_autostart
     monkeypatch.setattr(
         P, "set_autostart",
         lambda enabled, exe=None: erfasst.update(enabled=enabled, exe=exe) or True)
-
     I.install(str(exe), str(tmp_path / "Programs" / "Scrinium"), launch=False)
 
     assert erfasst["enabled"] is True, "install() will Autostart setzen"
-    assert erfasst["exe"], "install() muss einen Pfad nennen"
     assert str(tmp_path) in erfasst["exe"], (
-        "der registrierte Pfad zeigt nicht ins Testverzeichnis - "
-        "waere ein Wegwerf-Ordner fuer den Nutzer")
+        f"waere ein Wegwerf-Ordner fuer den Nutzer: {erfasst['exe']}")
 
 
 def test_install_is_repeatable(payload, tmp_path, monkeypatch):
