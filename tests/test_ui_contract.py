@@ -160,9 +160,14 @@ def test_spec_collects_settings_html_and_tools(monkeypatch):
         "settings.html landet nicht in den Daten - open_settings() gibt "
         "in der EXE still '' zurueck")
 
-    assert "tools_datas in datas" in spec or "tools_datas" in \
-        spec.split("datas=")[1].split("),")[0], \
-        "tools_datas wird gesammelt, aber nicht an datas uebergeben"
+    # Die datas=-Zeile muss die Werkzeuge wirklich enthalten - sonst
+    # werden sie gesammelt und dann weggeworfen.
+    datas_zeilen = [z.strip() for z in spec.splitlines()
+                    if z.strip().startswith("datas=")]
+    assert datas_zeilen, "keine datas=-Zeile in der Spec"
+    assert any("tools_datas" in z for z in datas_zeilen), (
+        f"tools_datas fehlt in der datas=-Zeile: {datas_zeilen}")
+    assert any("html_datas" in z for z in datas_zeilen), datas_zeilen
 
     ziele = [ziel for _, ziel in daten]
     assert any(z.startswith("tools") for z in ziele), (
