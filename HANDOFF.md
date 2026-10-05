@@ -1,137 +1,211 @@
-# Scrinium v2.0 — Stand (01.10.2026)
+# Scrinium — Stand vom 4. Oktober 2026
 
-**Nichts committet, nichts gepusht.** `.gitignore` ist fertig, aber `origin`
-zeigt weiterhin auf ein fremdes Repo (siehe unten) — das braucht deine Freigabe.
+Kurze Übersicht: was läuft, was nicht, und was als Nächstes ansteht.
+Geschrieben für den Nutzer, nicht für ein Release-Dokument.
 
 ---
 
-## ✅ Fertig und verifiziert
+## Was heute passiert ist
 
-**162 Tests grün** (`.venv\Scripts\python -m pytest tests\ -q`), EXE gebaut und
-funktional durchgetestet.
+### 1. Der Plan wurde festgelegt
 
-| Bereich | Datei | LOC |
+Scrinium ist kein einzelnes Programm, sondern ein Rahmen plus Werkzeuge:
+
+```
+Scrinium/
+  Scrinium.exe
+  scrinium/                  <- was Scrinium selbst braucht
+    kern.py                  <- findet die Werkzeuge, kennt keines davon
+    texte.py                 <- alle sichtbaren Texte, ein Ort
+    sprache/de.py, en.py     <- Sprachen als Dateien
+    einstellungen.py          <- was der Nutzer einstellt
+    bruecke.py               <- Verbindung zwischen Fenster und Kern
+    fenster.py, fenster.html  <- das Fenster und seine Oberfläche
+  tools/
+    _downloadsorter/          <- ein Werkzeug, Ordner für Ordner
+      __init__.py             <- NAME, pruefe(), starte(), vorschau()
+      logik/regeln.py         <- die eigentliche Entscheidung
+```
+
+Ein Werkzeug ist ein Ordner mit drei Dingen:
+
+```python
+NAME  = "Downloads-Sortierer"
+def pruefe(): ...            # darf ich starten?
+def starte(): ...            # was ich tue, gibt immer dieselbe Form zurück
+```
+
+Neu ist ein Werkzeug? Ordner reinkopieren, fertig. Kein Code, keine
+Konfigurationsdatei. Das war das Ziel, und es funktioniert.
+
+### 2. Das Fenster ist ein echtes Programm
+
+Ursprünglich war geplant: Browser. Jetzt ist es `pywebview` mit
+WebView2 — ein echtes Fenster mit Rahmen, ohne URL-Leiste. Alt-F4
+schließt, Ctrl+C nicht.
+
+Warum pywebview und nicht Customtkinter: Material Design mit runden
+Buttons, weichen Schatten und dunklen Farben geht in Tkinter nicht.
+WebView2 ist auf Windows 11 Standard, auf dem Rechner in Version
+154.0.4258 vorhanden.
+
+### 3. Die Oberfläche
+
+Drei Spalten: Werkzeuge links, Arbeit in der Mitte, Ordner und
+Sicherheitshinweis rechts. Grundsätze:
+
+- Schrift nie unter 13 px, meist 17 bis 34 px
+- Keine Buttons ohne Text (außer die drei Fensterknöpfe oben)
+- Klickflächen mindestens 48 px hoch
+- Alle Aktions-Buttons sind rund
+- Sprache: hell und dunkel, Standard folgt Windows
+
+Gemessen in vier Fenstergrößen (1600, 1280, 1100, 960 px): kein
+Überlauf, nichts abgeschnitten, nichts ragt heraus. Unter 1180 px
+wandert die rechte Spalte nach unten, unter 1000 px wird die Leiste
+zur schmalen Iconleiste.
+
+### 4. Das Fenster kann echte Daten
+
+Nicht nur bunt: es zeigt den Download-Ordner, die Liste der Dateien
+mit ihrem Zielordner, und nach dem Klick das Ergebnis mit Undo-Knopf.
+
+Unfertige Downloads sind sichtbar und bleiben liegen — mit dem Grund
+„lädt noch". Das ist die wichtigste Sicherheitszusage, und sie steht
+im Fenster, nicht nur im Code.
+
+### 5. Fehler, die erst beim Prüfen auffielen
+
+Das ist der ehrlichste Teil. Vier davon waren echte Fehler im Code:
+
+| Fehler | Wirkung | Gefixt |
 |---|---|---|
-| Kategorien-Registry, 17 Kategorien / 320 Endungen | `scrinium/categories.py` | ~300 |
-| Regelauflösung + Download-Vollständigkeit | `scrinium/rules.py` | ~270 |
-| Dry-Run-Engine, Kollisionen, `apply()` | `scrinium/engine.py` | ~420 |
-| Undo-Journal (JSON-Lines, crash-sicher) | `scrinium/history.py` | ~218 |
-| Config v2, v1-Migration, Registry-Downloads-Ordner | `scrinium/config.py` | ~240 |
-| DE/EN i18n, 89 Keys | `scrinium/i18n.py` | ~252 |
-| Watcher mit Settle-Guard | `scrinium/watcher.py` | ~260 |
-| Tray/Autostart/Single-Instance (ctypes) | `scrinium/platform_win.py` | ~430 |
-| Theme (fixt v1-Akzent-Bug) | `scrinium/theme.py` | ~130 |
-| CLI (11 Modi) | `scrinium/cli.py` | ~280 |
-| Icon-Generator (7 Größen, kein Pillow) | `scrinium/icons.py` | ~150 |
+| `scrinium.ui.app` importiert | Fenster startete nicht | `main.pyw` zeigt jetzt auf `scrinium.launcher` |
+| Window-Objekt im JSON-Zustand | `zustand()` verschluckte sich selbst | Fenster in eigenes Feld |
+| `.work` ohne `min-height: 0` | Liste wurde unerreichbar, kein Scrollen | ergänzt |
+| `--r-full` nie definiert | alle runden Elemente waren eckig | Token ergänzt |
+| vier Zustandsklassen nie gesetzt | Kachel ohne Auswahl, Status ohne Farbe | werden jetzt gesetzt |
+| `distutils` ausgeschlossen | Build brach ab | wieder raus, pythonnet braucht es |
 
-Tests: `tests/` mit 162 Tests über categories, rules, engine, history, config,
-watcher, CLI (Subprozess), i18n, util.
+Und zwei waren Fehler in **meinen Tests**, nicht im Produkt:
 
-Packaging: `Scrinium.spec`, `build.bat`, `requirements.txt`,
-`requirements-dev.txt`, Icon in `assets/scrinium.ico`.
+- Ich maß `MainWindowHandle` — bei pywebview immer 0. Richtig ist der
+  WebView2-Kindprozess.
+- Ich prüfte auf tote CSS-Regeln und übersah Klassen, die erst zur
+  Laufzeit im JavaScript entstehen.
 
 ---
 
-## 🐛 Gefundene und behobene Bugs
+## Stand der Prüfungen
 
-Die meisten davon waren **echte Produktfehler**, nicht Testprobleme:
+| Prüfung | Ergebnis |
+|---|---|
+| `pytest tests/` (kanonisch) | 288 passed |
+| Fenster-DOM (echtes Fenster, 41 Dateien) | 22 von 22 |
+| Brücke (Kern + Werkzeug, ohne Fenster) | 31 von 31 |
+| Ad-hoc (main.pyw, Brücke, HTML, Spec, EXE) | 41 von 41 |
+| Skalierung (4 Fenstergrößen) | 39 von 39 |
 
-| # | Bug | Wirkung |
-|---|---|---|
-| 1 | **`--lang en` änderte die Ordnernamen** (`Dokumente/` → `Documents/`) | Sprachwechsel → zweiter leerer Ordnerbaum, Dateien wirken verloren. **Datenverlust-Optik.** |
-| 2 | **v1-Migration lief nie** (`iv`/`new` wurden ignoriert) | Alle v1-Nutzer verlieren ihre Einstellungen beim Update |
-| 3 | **Chrome-Temp-Erkennung war case-sensitiv** | `.com.google.Chrome.*` nie erkannt |
-| 4 | **`--source DIR` ignorierte den Ordner** | Dateien landeten im *konfigurierten* Downloads-Ordner, nicht in `DIR` |
-| 5 | **`--category` war `set("video")`** | `{v,i,d,e,o}` → „unknown category: e, v, d, o, i" |
-| 6 | **`--category` schrieb `disabled_categories` persistent** | Ein einmaliger Aufruf deaktiviert dauerhaft alle anderen Kategorien |
-| 7 | **EXE crashte nach dem Sortieren** (`UnicodeEncodeError` am `✓`) | Dateien waren verschoben, aber **kein `run_id` → kein Undo** |
-| 8 | **`plan()` übersprang bei `recursive=True` jede Datei** | Unterordner wurden nie sortiert |
-| 9 | **Settle-Guard prüfte alte Snapshots** | Dateien wurden **während des Schreibens** verschoben |
-| 10 | **`_new_files` = Mengendifferenz** | Start bei laufendem Download → Datei wird nie einsortiert |
-| 11 | **`ctypes` ohne Prototypen** | HWND auf 64 Bit abgeschnitten → Tray-Icon erschien nie |
-| 12 | **`self.tip` überschrieb die Methode** | `AttributeError`/`TypeError` bei jedem Tray-Update |
-| 13 | `Plan.to_dict` gab die falsche Struktur zurück | `--json` war unbrauchbar |
-| 14 | `.ts` (TypeScript) als Video, `.3ds` doppelt | Falsche Einordnung |
-
-Alle 14 haben einen Regressionstest in `tests/`.
-
----
-
-## ⚠️ Nicht verifizierbar in dieser Umgebung
-
-**Der Tray-Icon-Build.** `CreateWindowExW` liefert hier `0` — die Session hat
-keinen interaktiven Desktop. Der Code ist korrekt (Prototypen deklariert,
-`WS_POPUP`, Rückgabewert geprüft, `build()` gibt sauber `False` zurück statt zu
-raisen, und die App läuft ohne Tray weiter) — aber ich kann nicht *sehen*,
-dass das Symbol wirklich erscheint. Das gehört am Rechner getestet.
-
----
-
-## 📋 Offen / nächste Schritte
-
-1. **GUI (`scrinium/ui/`)** — das ist der einzige große Brocken, der noch
-   fehlt. `main.pyw` importiert `scrinium.ui.app.run`; die Logik ist fertig,
-   es fehlen nur die Widgets (4 Tabs: Sortieren mit Preview-Tabelle,
-   Regeln, Verlauf mit Undo, Einstellungen).
-2. **`build/version_info.txt`** — `build.bat` erwähnt sie, PyInstaller läuft
-   aber auch ohne (getestet, Build ok).
-3. **README** ist geschrieben; Screenshot fehlt noch.
-4. **`ScriniumReleases/`** aufräumen: `Scrinium_v1_0.exe` und `_v1_1.exe` sind
-   die 32-MB-Ballast-Builds (pystray+Pillow). Neu ist **8,1 MB**.
-
----
-
-## ⚡ Vor dem ersten Commit
+Die Ad-hoc-Skripte liegen in `%TEMP%`, nicht im Projekt:
+`hermes-verify-scrinium-ui.py`, `hermes-verify-scrinium-scale.py`.
+Aufräumen:
 
 ```bash
-cd "C:/Users/Friedrich/Documents/Portfolio/GitHub/Scrinium"
-git remote -v
+rm "$TEMP/hermes-verify-scrinium-ui.py" "$TEMP/hermes-verify-scrinium-scale.py"
 ```
 
-Aktuell:
-
-```
-origin  https://github.com/JustinCase-306/Scrinium.git
-```
-
-**Das ist ein anderes Projekt.** Pushes würden in Scrinium landen. Ich fasse
-das nicht an, bis du es freigibst — vermutlich soll es
-`JustinAndBenjamin/Scrinium.git` sein.
-
-Danach:
-
-```bash
-git add -A
-git status          # prüfen: .venv/, dist/, build/, *.exe dürfen NICHT drin sein
-git commit -m "Scrinium v2.0: dry-run engine, undo journal, 17 categories, CLI"
-```
+Die drei Testskripte liegen dauerhaft in `prototypes/ui/`:
+`test_fenster_dom.py`, `test_ui_integration.py`, `test_pywebview_start.py`.
 
 ---
 
-## 💾 Größe
+## Was NICHT geprüft ist
 
-| | v1.0 | v1.2/1.3 | v2.0 |
-|---|---|---|---|
-| EXE | 31,97 MB | 13,41 MB | **8,11 MB** |
+Ehrlich, weil davon viel abhängt:
 
-Der Unterschied zu v1.2: Tray ohne `pystray`+`Pillow` (reines ctypes),
-`excludes` im Spec, `upx=False` bleibt (UPX wäre kleiner, aber es nervt
-Virenscanner).
+- **WebView2 fehlt auf einem anderen Rechner.** Der Pfad ist gebaut
+  (eigene Fehlerseite, Hinweis auf `Scrinium.exe --sortieren`), aber
+  nie durchlaufen. Auf Windows 10 ohne WebView2 würde Scrinium nicht
+  starten.
+- **200 % Windows-Skalierung.** Nur Pixelbreiten gemessen. Die
+  rem-Abstände sind vorbereitet, geprüft ist es nicht.
+- **Tastaturbedienung.** Getestet wurde Maus und Klick. Ein alter
+  Mensch ohne Maus kann Scrinium vermutlich nicht bedienen.
+- **Wie es wirklich aussieht.** Alle Messungen prüfen Struktur, nicht
+  Schönheit. Das Aussehen wurde nie beurteilt — weder von mir noch,
+  seit dem letzten Entwurf, von dir.
 
 ---
 
-## 🧪 Selbst testen
+## Was ansteht
 
-```bash
-# 1. Tests
-.venv\Scripts\python -m pytest tests\ -q
+### Zuerst: `build.bat` ist kaputt (wichtig)
 
-# 2. CLI mit Vorschau
-.venv\Scripts\python -m scrinium --dry-run --lang de
+`PYTHONPATH` zeigt global auf den Hermes-Agent. Beim normalen Build
+zieht PyInstaller dessen `cffi 2.0.0` mit, und die fertige EXE
+startet mit:
 
-# 3. Bauen
-build.bat --test
-
-# 4. GUI starten (funktioniert noch nicht — ui/ fehlt)
-.venv\Scripts\python main.pyw
 ```
+Version mismatch: cffi 2.0.0 ... 2.1.1
+```
+
+Der saubere Build braucht `env -u PYTHONPATH -u PYTHONHOME`. Alle
+heutigen Builds liefen so. **Ein normaler `build.bat` erzeugt bei dir
+eine kaputte EXE** — das ist die erste Aufgabe für morgen.
+
+### Dann, in dieser Reihenfolge
+
+1. **`build.bat` reparieren**, dann frisch bauen und prüfen.
+2. **README aktualisieren.** Beschreibt noch den alten Stand ohne Fenster.
+3. **Installer neu bauen.** `Scrinium-Setup.exe` enthält eine EXE von
+   heute 10:16, nicht die von 20:49.
+4. **Zwei Sortierer nebeneinander.** Der alte (`engine.py`, `rules.py`,
+   `categories.py`, ~3.660 Zeilen) und der neue in `tools/`. Beide haben
+   Tests. Welcher bleibt, entscheidet den weiteren Aufbau.
+5. **Ordner aufräumen.** Die HTML-Entwürfe in `prototypes/ui/` gehören
+   entweder ins Git oder raus.
+
+### Was danach kommt, wenn die UI steht
+
+Die Werkzeuge, in dieser Reihenfolge — jede für sich allein nutzbar:
+
+- **Duplicate Finder** — überschneidet sich mit keinem Werkzeug, kann
+  sofort 800 MB einparen
+- **Glash-Benachrichtigungen** — „You notice it when you look for it";
+  WebView2 macht sie trivial
+- **Screenshot-Namen per OCR** — deterministisch, offline, kein Modell
+- **Screenshots benennen mit KI** — SmolVLM, abwählbar, nachladbar
+- **Automatisch sortieren im Hintergrund** (Watcher, steht im Code, ist
+  nicht verdrahtet)
+
+Der Watcher ist übrigens schon fertig programmiert (`watcher.py`, 264
+Zeilen, mit Tests) — er wird nur nirgends aufgerufen.
+
+---
+
+## Was nicht mehr gebaut wird
+
+Aus dem ursprünglichen Plan, bewusst gestrichen:
+
+- **Storage Analyzer** — überschneidet sich mit Everything und WizTree.
+  Die lesen das NTFS-Metadatenverzeichnis direkt; das kann Scrinium
+  ohne Admin-Rechte nicht.
+- **Optionales sicheres Vault** — Angriffsfläche für ein Programm, das
+  unbeaufsichtigt läuft. Reicht nicht als Grund.
+- **KI als fester Bestandteil** — wird ein nachladbares Modul. Ein
+  Modell, das einen Dateinamen festschreibt, muss man abschalten können.
+
+---
+
+## Ein Hinweis zum Git-Stand
+
+Ein Commit liegt auf `main` (`c86d2ea`, Scrinium v2.0). Alles danach —
+die Modularisierung, der Kern, das Fenster, die Oberfläche — ist
+**uncommitted**.
+
+Bewusst nicht committet: `add`, `commit` oder `push` ohne ausdrückliche
+Zustimmung.
+
+Bevor committet wird, einmal `git status` ansehen. Zu erwarten sind
+neue Dateien unter `scrinium/`, `tools/`, `tests/`, `prototypes/` und
+geänderte Dateien `main.pyw`, `Scrinium.spec`, `build.bat`.

@@ -1,14 +1,14 @@
 """Scriniums Fenster.
 
 Startet ein echtes Fenster (kein Browser) mit der HTML-Oberflaeche aus
-`fenster.html` und verbindet sie mit dem Python-Kern ueber `bruecke.py`.
+`window.html` und verbindet sie mit dem Python-Kern ueber `bridge.py`.
 
 Ablauf beim Start:
 
     Fenster oeffnet
-      -> bruecke.zustand()   holt Werkzeuge + Einstellungen
+      -> bridge.state()   holt Tools + Settings
       -> HTML baut sich auf  (Werkzeugleiste, Kopfzeile, Inhalt)
-      -> Knopf "Sortieren"   ruft bruecke.werkzeug_starten()
+      -> Knopf "Sortieren"   ruft bridge.start_tool()
       -> Ergebnis erscheint  mit Undo-Knopf
 
 Der Kern kennt das Fenster nicht, und das Fenster kennt den Kern nicht -
@@ -21,11 +21,11 @@ import os
 import sys
 import threading
 
-from . import bruecke
+from . import bridge
 
 # pywebview braucht .NET; fehlt es, ist das ein klarer Fehler statt
 # eines Absturzes mitten im Start.
-FEHLER_HTML = """<!DOCTYPE html><html lang="de"><head><meta charset="utf-8">
+ERROR_HTML = """<!DOCTYPE html><html lang="de"><head><meta charset="utf-8">
 <title>Scrinium</title>
 <style>
   body { font-family: "Segoe UI", system-ui, sans-serif; background: #141218;
@@ -43,32 +43,32 @@ FEHLER_HTML = """<!DOCTYPE html><html lang="de"><head><meta charset="utf-8">
      Auf diesem Rechner fehlt sie.</p>
   <p>Du kannst sie kostenlos nachinstallieren:<br>
      <code>Scrinium startet danach ohne Neustart</code></p>
-  <p class="klein">Die Sortierfunktion laeuft auch ohne Fenster:<br>
+  <p class="klein">Die Sortierfunktion running auch ohne Fenster:<br>
      <code>Scrinium.exe --sortieren</code></p>
 </div></body></html>"""
 
 
-def _html_pfad() -> str:
-    """Wo liegt fenster.html?
+def _html_path() -> str:
+    """Wo liegt window.html?
 
     Im fertigen Programm neben den Modulen, im Quellcode eine Ebene
     hoeher - beides darf nicht hart verdrahtet sein.
     """
     kandidaten = [
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "fenster.html"),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "window.html"),
         os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                     "scrinium", "fenster.html"),
+                     "scrinium", "window.html"),
     ]
     if getattr(sys, "frozen", False):
         kandidaten.insert(0, os.path.join(os.path.dirname(sys.executable),
-                                          "scrinium", "fenster.html"))
-    for pfad in kandidaten:
-        if os.path.isfile(pfad):
-            return pfad
+                                          "scrinium", "window.html"))
+    for path in kandidaten:
+        if os.path.isfile(path):
+            return path
     return kandidaten[0]
 
 
-def webview2_da():
+def webview2_present():
     """Ist die Windows-Webansicht installiert?"""
     import glob
     muster = [
@@ -83,7 +83,7 @@ def webview2_da():
 
 def starten() -> int:
     """Oeffnet das Fenster. Gibt einen Exitcode zurueck."""
-    if not webview2_da():
+    if not webview2_present():
         # Kein Fenster moeglich: die CLI funktioniert trotzdem.
         print("Scrinium: Windows-Webansicht fehlt.")
         print("  Oberflaeche: nicht verfuegbar.")
@@ -96,15 +96,15 @@ def starten() -> int:
         print(f"Scrinium: pywebview fehlt ({e}).")
         return 3
 
-    html = _html_pfad()
+    html = _html_path()
     if not os.path.isfile(html):
         html_pfad = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                  "_fehlt.html")
         with open(html_pfad, "w", encoding="utf-8") as fh:
-            fh.write(FEHLER_HTML)
+            fh.write(ERROR_HTML)
         html = html_pfad
 
-    api = bruecke_api()
+    api = bridge_api()
     fenster = webview.create_window(
         "Scrinium", html,
         js_api=api,
@@ -113,7 +113,7 @@ def starten() -> int:
         background_color="#141218",
         text_select=False,
     )
-    bruecke.fenster_setzen(fenster)
+    bridge.set_window(fenster)
 
     try:
         webview.start()
@@ -123,49 +123,49 @@ def starten() -> int:
     return 0
 
 
-def bruecke_api():
+def bridge_api():
     """Macht die Bruecke fuer JavaScript aufrufbar.
 
     pywebview ruft alles auf, was hier oeffentlich ist (kein _ vor dem
     Namen) - deshalb die kurze Liste statt `__all__`.
     """
     class Api:
-        def zustand(self):
-            return bruecke.zustand()
+        def state(self):
+            return bridge.state()
 
-        def werkzeug_starten(self, wid):
-            return bruecke.werkzeug_starten(wid)
+        def start_tool(self, wid):
+            return bridge.start_tool(wid)
 
-        def werkzeug_schalten(self, wid, an):
-            return bruecke.werkzeug_schalten(wid, bool(an))
+        def toggle_tool(self, wid, an):
+            return bridge.toggle_tool(wid, bool(an))
 
-        def sprache_setzen(self, sprache):
-            return bruecke.sprache_setzen(sprache)
+        def set_language(self, language):
+            return bridge.set_language(language)
 
-        def downloads_ordner_setzen(self, pfad):
-            return bruecke.downloads_ordner_setzen(pfad)
+        def set_downloads_folder(self, path):
+            return bridge.set_downloads_folder(path)
 
-        def ordner_waehlen(self):
-            return bruecke.ordner_waehlen()
+        def choose_folder(self):
+            return bridge.choose_folder()
 
-        def ordner_oeffnen(self):
-            return bruecke.ordner_oeffnen()
+        def open_folder(self):
+            return bridge.open_folder()
 
-        def einstellungen_oeffnen(self):
-            return bruecke.einstellungen_oeffnen()
+        def open_settings(self):
+            return bridge.open_settings()
 
-        def vorschau(self, wid):
-            return bruecke.vorschau(wid)
+        def preview(self, wid):
+            return bridge.preview(wid)
 
-        def _aktion(self, kennung):
-            """Wird von der Oberflaeche ueber API['_aktion'] aufgerufen.
+        def _action(self, kennung):
+            """Wird von der Oberflaeche ueber API['_action'] aufgerufen.
 
             Der fuehrende Unterstrich ist Absicht: pywebview blendet
             Attribute mit Unterstrich aus dem normalen Zugriff aus, damit
             nur die beabsichtigten Funktionen sichtbar sind. Die
             Oberflaeche umgeht das bewusst - es ist eine interne Route.
             """
-            return bruecke.aktion(kennung)
+            return bridge.action(kennung)
 
     return Api()
 

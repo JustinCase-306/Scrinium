@@ -32,41 +32,41 @@ print("=== 1) Bruecke ohne Fenster ===")
 os.environ["APPDATA"] = os.path.join(
     os.environ.get("TEMP", r"C:\Windows\Temp"), "hermes-ui-test")
 
-from scrinium import bruecke, kern  # noqa: E402
-from scrinium.einstellungen import Einstellungen  # noqa: E402
+from scrinium import bridge, core  # noqa: E402
+from scrinium.settings import Settings  # noqa: E402
 
-z = bruecke.zustand()
-ck("zustand() liefert ein dict", isinstance(z, dict), type(z))
-ck("werkzeuge gefunden", len(z["werkzeuge"]) >= 1,
-   [w["id"] for w in z["werkzeuge"]])
-ck("erstes Werkzeug ist der Sortierer",
-   z["werkzeuge"][0]["id"] == "downloadsorter",
-   z["werkzeuge"][0]["id"] if z["werkzeuge"] else None)
-ck("einstellungen vorhanden", "downloads_ordner" in z["einstellungen"],
-   z["einstellungen"])
-ck("kein Fenster im Weg (ordner_oeffnen ohne Fenster)",
-   bruecke.ordner_oeffnen() in ("", z["einstellungen"]["downloads_ordner"]))
+z = bridge.state()
+ck("state() liefert ein dict", isinstance(z, dict), type(z))
+ck("tools gefunden", len(z["tools"]) >= 1,
+   [w["id"] for w in z["tools"]])
+ck("first tool is the sorter",
+   z["tools"][0]["id"] == "downloadsorter",
+   z["tools"][0]["id"] if z["tools"] else None)
+ck("einstellungen vorhanden", "downloads_folder" in z["settings"],
+   z["settings"])
+ck("kein Fenster im Weg (open_folder ohne Fenster)",
+   bridge.open_folder() in ("", z["settings"]["downloads_folder"]))
 
 # ── 2. Vorschau mit echten Dateien ───────────────────────────
 print("\n=== 2) Vorschau (read-only) ===")
 import tempfile, time as tmod  # noqa: E402
 
-d = tempfile.mkdtemp(prefix="hermes-vorschau-")
+d = tempfile.mkdtemp(prefix="hermes-preview-")
 for name in ("a.pdf", "b.jpg", "c.mp4", "d.crdownload"):
     p = os.path.join(d, name)
     open(p, "wb").write(b"x" * 2048)
     alt = tmod.time() - 600
     os.utime(p, (alt, alt))
 
-cfg = Einstellungen.standard()
-cfg.downloads_ordner = d.replace("\\", "/")
+cfg = Settings.standard()
+cfg.downloads_folder = d.replace("\\", "/")
 cfg.downloads_min_age = 0
 cfg.speichern()
 
-v = bruecke.vorschau("downloadsorter")
-ck("vorschau liefert ein dict", isinstance(v, dict), type(v))
-ck("3 Dateien werden verschoben", v.get("verschoben") == 3,
-   (v.get("verschoben"), [x["name"] for x in v.get("dateien", [])]))
+v = bridge.preview("downloadsorter")
+ck("preview liefert ein dict", isinstance(v, dict), type(v))
+ck("3 Dateien werden verschoben", v.get("moved") == 3,
+   (v.get("moved"), [x["name"] for x in v.get("dateien", [])]))
 ck("crdownload bleibt liegen",
    any(x["name"] == "d.crdownload" and not x["ziel"]
        for x in v.get("dateien", [])), v.get("dateien"))
@@ -79,44 +79,44 @@ ck("Vorschau hat nichts bewegt",
 
 # ── 3. Sortieren ueber die Bruecke ───────────────────────────
 print("\n=== 3) Sortieren + Undo ueber die Bruecke ===")
-r = bruecke.werkzeug_starten("downloadsorter")
+r = bridge.start_tool("downloadsorter")
 ck("kein Fehler", not r.get("fehler"), r.get("text"))
-ck("3 einsortiert", r["daten"]["verschoben"] == 3, r["daten"])
-ck("Undo angeboten", len(r["aktionen"]) == 1, r["aktionen"])
+ck("3 einsortiert", r["data"]["moved"] == 3, r["data"])
+ck("Undo angeboten", len(r["actions"]) == 1, r["actions"])
 ck("auf Deutsch ueber die Sprachdatei",
    "einsortiert" in r["text"], r["text"])
 
-undo = bruecke.aktion(r["aktionen"][0][1])
+undo = bridge.action(r["actions"][0][1])
 ck("Undo ohne Fehler", not undo.get("fehler"), undo.get("text"))
-ck("3 zurueck", undo["daten"]["zurueck"] == 3, undo["daten"])
+ck("3 zurueck", undo["data"]["restored"] == 3, undo["data"])
 ck("Quelle wieder voll",
    sorted(os.listdir(d)) == ["a.pdf", "b.jpg", "c.mp4", "d.crdownload"],
    sorted(os.listdir(d)))
 
 # ── 4. Unbekannte Aktion ─────────────────────────────────────
 print("\n=== 4) Unbekannte Kennung ===")
-falsch = bruecke.aktion("gibt-es-nicht")
+falsch = bridge.action("gibt-es-nicht")
 ck("ist ein Fehler, kein stiller Erfolg", falsch.get("fehler") is True, falsch)
 
 # ── 5. Sprache ───────────────────────────────────────────────
 print("\n=== 5) Sprachwechsel ===")
-bruecke.sprache_setzen("en")
-r2 = bruecke.werkzeug_starten("downloadsorter")
+bridge.set_language("en")
+r2 = bridge.start_tool("downloadsorter")
 ck("englischer Text", "Filed" in r2.get("text", "") or "Nothing" in r2.get("text", ""),
    r2.get("text"))
-bruecke.sprache_setzen("de")
-ck("zurueck auf Deutsch", bruecke.zustand()["einstellungen"]["sprache"] == "de")
+bridge.set_language("de")
+ck("zurueck auf Deutsch", bridge.state()["settings"]["language"] == "de")
 
 # ── 6. Echtes Fenster ────────────────────────────────────────
 print("\n=== 6) Fensterstart ===")
 import webview  # noqa: E402
 
-html = os.path.join(ROOT, "scrinium", "fenster.html")
-ck("fenster.html vorhanden", os.path.isfile(html), html)
+html = os.path.join(ROOT, "scrinium", "window.html")
+ck("window.html vorhanden", os.path.isfile(html), html)
 
-from scrinium import fenster as fenster_mod  # noqa: E402
+from scrinium import window as window_mod  # noqa: E402
 
-api = fenster_mod.bruecke_api()
+api = window_mod.bridge_api()
 erg = {}
 fenster_obj = None
 
@@ -127,14 +127,14 @@ def laden():
         import time as T
         for _ in range(40):
             try:
-                z2 = window.scrinium.zustandIntern()
+                z2 = window.scrinium.stateIntern()
                 break
             except AttributeError:
                 T.sleep(0.25)
         erg["titel"] = window.document.title
         erg["werkzeugeImDom"] = len(window.document.querySelectorAll(".tool"))
         erg["ctaDa"] = window.document.querySelector(".cta") is not None
-        erg["pfad"] = window.document.getElementById("ordner-pfad").textContent
+        erg["path"] = window.document.getElementById("ordner-pfad").textContent
         erg["titelText"] = window.document.querySelector(".w-title") \
             .textContent if window.document.querySelector(".w-title") else ""
     except Exception:
@@ -144,7 +144,7 @@ def laden():
 fenster_obj = webview.create_window(
     "Scrinium", html, js_api=api, width=1280, height=820,
     min_size=(900, 620), background_color="#141218")
-bruecke.fenster_setzen(fenster_obj)
+bridge.set_window(fenster_obj)
 
 
 def erledigen():

@@ -179,7 +179,7 @@ class History:
 
         entry = self.get(run_id)
         if entry is None:
-            return 0, [f"Unbekannter Lauf: {run_id}"]
+            return 0, [f"Unbekannter Run: {run_id}"]
 
         restored = 0
         errors: list[str] = []

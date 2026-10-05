@@ -12,7 +12,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "tab.sort": "Sortieren",
         "tab.rules": "Regeln",
         "tab.history": "Verlauf",
-        "tab.settings": "Einstellungen",
+        "tab.settings": "Settings",
         # sort tab
         "source": "📥 Download-Ordner",
         "browse": "Durchsuchen…",
@@ -34,7 +34,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "status_cancelled": "Abgebrochen nach {count} Datei(en).",
         "status_error": "Fehler: {err}",
         "col.file": "Datei",
-        "col.category": "Kategorie",
+        "col.category": "Category",
         "col.size": "Größe",
         "col.reason": "Warum",
         "col.new_name": "Neuer Name",
@@ -69,7 +69,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "history_cleared": "Verlauf gelöscht.",
         "history_clear": "Verlauf löschen",
         # settings tab
-        "targets": "📁 Zielordner pro Kategorie",
+        "targets": "📁 Zielordner pro Category",
         "targets_hint": "leer lassen = Standardordner im Download-Ordner",
         "reset": "Standard",
         "appearance": "🎨 Aussehen",
@@ -88,8 +88,8 @@ STRINGS: dict[str, dict[str, str]] = {
         "close_tray": "Schließen legt in den Infobereich",
         "autostart": "Mit Windows starten",
         "notify": "Desktop-Benachrichtigungen",
-        "save": "💾 Einstellungen speichern",
-        "saved": "✓ Einstellungen gespeichert.",
+        "save": "💾 Settings speichern",
+        "saved": "✓ Settings gespeichert.",
         "open_cfg": "📁 Konfigurationsordner",
         "about": "ⓘ Über",
         # tray menu
@@ -105,7 +105,7 @@ STRINGS: dict[str, dict[str, str]] = {
             "Scrinium verschiebt fertige Dateien aus deinem Download-Ordner in "
             "passende Unterordner.\n\n"
             "• Vorschau zeigt erst, was passieren würde\n"
-            "• Jeder Lauf lässt sich rückgängig machen\n"
+            "• Jeder Run lässt sich rückgängig machen\n"
             "• Halbe Downloads (.crdownload/.part) werden ignoriert"
         ),
         "first_run_ok": "Verstanden",

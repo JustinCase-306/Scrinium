@@ -321,9 +321,9 @@
 // ═══════════════════════════════════════════════════════════
 var scrinium = (function () {
 
-  var ZUSTAND = { werkzeuge: [], einstellungen: {}, ergebnis: null };
-  var GEWAHLT = null;
-  var pfad = (window.pywebview && window.pywebview.api) ? 'pywebview.api' : null;
+  var STATE = { tools: [], settings: {}, result: null, preview: null };
+  var SELECTED = null;
+  var path = (window.pywebview && window.pywebview.api) ? 'pywebview.api' : null;
 
   // pywebview haengt seine API erst nach dem Laden an. Wir warten darauf.
   function bereit() {
@@ -388,10 +388,10 @@ var scrinium = (function () {
   };
 
   var T = TEXTE.de;
-  function sprache() {
-    return (ZUSTAND.einstellungen && ZUSTAND.einstellungen.sprache === 'en') ? 'en' : 'de';
+  function language() {
+    return (STATE.settings && STATE.settings.sprache === 'en') ? 'en' : 'de';
   }
-  function sag(k) { return (TEXTE[sprache()] || TEXTE.de)[k] || k; }
+  function sag(k) { return (TEXTE[language()] || TEXTE.de)[k] || k; }
 
   // ── Hilfen ───────────────────────────────────────────────
   function el(tag, klasse, text) {
@@ -405,7 +405,7 @@ var scrinium = (function () {
     s.textContent = name;
     return s;
   }
-  function groesse(bytes) {
+  function format_size(bytes) {
     if (!bytes) return '';
     var mb = bytes / 1048576;
     if (mb >= 1024) return (mb / 1024).toFixed(1) + ' GB';
@@ -428,24 +428,25 @@ var scrinium = (function () {
   }
 
   // ── Werkzeugleiste ───────────────────────────────────────
-  function zeichneWerkzeuge() {
+  function render_tools() {
     var box = document.getElementById('werkzeug-liste');
     box.innerHTML = '';
     document.querySelector('.rail-h').textContent = sag('werkzeuge');
 
-    if (!ZUSTAND.werkzeuge.length) {
+    if (!STATE.tools.length) {
       box.appendChild(el('div', 'leer', sag('nochNichtDa')));
       return;
     }
 
-    ZUSTAND.werkzeuge.forEach(function (w) {
-      var b = el('button', 'tool' + (w.id === GEWAHLT ? ' on' : ''));
+    STATE.tools.forEach(function (w) {
+      var gewaehlt = w.id === SELECTED;
+      var b = el('button', 'tool' + (gewaehlt ? ' on' : ''));
       b.appendChild(icon(iconName(w.id)));
 
       var t = el('div', 'tool-t');
       t.appendChild(el('span', 'tool-name', w.name));
 
-      var st = el('span', 'state');
+      var st = el('span', 'state' + (w.bereit && !w.fehler ? ' ok' : ''));
       if (w.fehler) {
         st.appendChild(icon('error'));
         st.appendChild(document.createTextNode(sag('werkzeugKaputt')));
@@ -461,15 +462,16 @@ var scrinium = (function () {
 
       var schalter = el('button', 'tool-schalter' + (w.an ? ' an' : ''),
                         w.an ? sag('aus') : sag('einschalten'));
+      schalter.setAttribute('aria-pressed', w.an ? 'true' : 'false');
       schalter.onclick = function (ev) {
         ev.stopPropagation();
-        API.werkzeug_schalten(w.id, !w.an).then(function (z) {
-          zustand(z);
+        API.toggle_tool(w.id, !w.an).then(function (z) {
+          apply_state(z);
         });
       };
       b.appendChild(schalter);
 
-      b.onclick = function () { waehlen(w.id); };
+      b.onclick = function () { choose_tool(w.id); };
       box.appendChild(b);
     });
   }
@@ -485,42 +487,42 @@ var scrinium = (function () {
   }
 
   // ── Arbeitsflaeche ───────────────────────────────────────
-  function waehlen(id) {
-    GEWAHLT = id;
-    ZUSTAND.ergebnis = null;
-    ZUSTAND.vorschau = null;
-    zeichneWerkzeuge();
-    zeichneArbeit();
-    vorschauLaden();
+  function choose_tool(id) {
+    SELECTED = id;
+    STATE.result = null;
+    STATE.preview = null;
+    render_tools();
+    render_work();
+    load_preview();
   }
 
-  function aktuellesWerkzeug() {
-    for (var i = 0; i < ZUSTAND.werkzeuge.length; i++) {
-      if (ZUSTAND.werkzeuge[i].id === GEWAHLT) return ZUSTAND.werkzeuge[i];
+  function current_tool() {
+    for (var i = 0; i < STATE.tools.length; i++) {
+      if (STATE.tools[i].id === SELECTED) return STATE.tools[i];
     }
-    return ZUSTAND.werkzeuge[0] || null;
+    return STATE.tools[0] || null;
   }
 
-  function zeichneArbeit() {
+  function render_work() {
     var w = document.getElementById('arbeitsflaeche');
     w.innerHTML = '';
 
-    var werkzeug = aktuellesWerkzeug();
-    if (!werkzeug) {
+    var tool = current_tool();
+    if (!tool) {
       w.appendChild(el('div', 'leer', sag('nochNichtDa')));
       return;
     }
 
-    w.appendChild(el('div', 'w-title', werkzeug.name));
-    w.appendChild(el('div', 'w-sub', beschreibung(werkzeug.id)));
+    w.appendChild(el('div', 'w-title', tool.name));
+    w.appendChild(el('div', 'w-sub', beschreibung(tool.id)));
 
-    if (!werkzeug.bereit && werkzeug.grund) {
+    if (!tool.ready && tool.reason) {
       var warnung = el('div', 'done');
       warnung.style.background = 'color-mix(in srgb, var(--danger) 12%, var(--surface))';
       warnung.style.borderColor = 'color-mix(in srgb, var(--danger) 40%, transparent)';
       warnung.appendChild(icon('warning'));
       var wd = el('div');
-      wd.appendChild(el('div', 'done-t', werkzeug.grund));
+      wd.appendChild(el('div', 'done-t', tool.reason));
       wd.appendChild(el('div', 'done-s', ''));
       warnung.appendChild(wd);
       w.appendChild(warnung);
@@ -529,33 +531,33 @@ var scrinium = (function () {
 
     // Der grosse Aufruf
     var start = el('button', 'cta');
-    start.appendChild(icon(iconName(werkzeug.id)));
+    start.appendChild(icon(iconName(tool.id)));
     start.appendChild(document.createTextNode(sag('sortieren')));
-    start.onclick = function () { starten(); };
+    start.onclick = function () { start_tool(); };
     w.appendChild(start);
     w.appendChild(el('div', 'cta-note', ''));
 
     // Vorschau, falls es eine gibt
-    if (ZUSTAND.vorschau) {
-      w.appendChild(zeichneDateien(ZUSTAND.vorschau));
+    if (STATE.preview) {
+      w.appendChild(render_files(STATE.preview));
     }
 
     // Ergebnis nach einem Lauf
-    if (ZUSTAND.ergebnis) {
-      w.appendChild(zeichneErgebnis(ZUSTAND.ergebnis));
+    if (STATE.result) {
+      w.appendChild(render_result(STATE.result));
     }
   }
 
   function beschreibung(id) {
     if (/download|sort/.test(id)) {
-      return sprache() === 'en'
+      return language() === 'en'
         ? 'Sorts finished files into matching folders. Unfinished downloads stay untouched.'
         : 'Ordnet fertige Dateien in passende Ordner. Unfertige Downloads bleiben liegen.';
     }
-    return sprache() === 'en' ? 'A Scrinium tool.' : 'Ein Scrinium-Werkzeug.';
+    return language() === 'en' ? 'A Scrinium tool.' : 'Ein Scrinium-Werkzeug.';
   }
 
-  function zeichneDateien(vorschau) {
+  function render_files(vorschau) {
     var box = el('div', 'files');
     var kopf = el('div', 'files-h');
     kopf.appendChild(el('b', null, sag('passiertGleich')));
@@ -574,23 +576,24 @@ var scrinium = (function () {
 
       row.appendChild(el('span', 'f-name', d.name));
 
-      var ziel = el('span', 'f-to' + (d.ziel ? '' : ' stay'));
+      var target = el('span', 'f-to' + (d.ziel ? '' : ' stay'));
+      if (!d.ziel) target.setAttribute('title', d.grund || sag('bleibtLiegen'));
       if (d.ziel) {
-        ziel.appendChild(icon('arrow_forward'));
-        ziel.appendChild(document.createTextNode(d.ziel));
+        target.appendChild(icon('arrow_forward'));
+        target.appendChild(document.createTextNode(d.ziel));
       } else {
-        ziel.appendChild(icon('help'));
-        ziel.appendChild(document.createTextNode(d.grund || sag('bleibtLiegen')));
+        target.appendChild(icon('help'));
+        target.appendChild(document.createTextNode(d.grund || sag('bleibtLiegen')));
       }
-      row.appendChild(ziel);
+      row.appendChild(target);
 
-      if (d.groesse) row.appendChild(el('span', 'f-sz', groesse(d.groesse)));
+      if (d.groesse) row.appendChild(el('span', 'f-sz', format_size(d.groesse)));
       box.appendChild(row);
     });
     return box;
   }
 
-  function zeichneErgebnis(e) {
+  function render_result(e) {
     var box = el('div', 'done');
     if (e.fehler) {
       box.style.background = 'color-mix(in srgb, var(--danger) 12%, var(--surface))';
@@ -603,7 +606,7 @@ var scrinium = (function () {
     var d = el('div');
     d.appendChild(el('div', 'done-t', e.text));
     var teile = [];
-    if (e.daten && e.daten.groesse) teile.push(groesse(e.daten.groesse));
+    if (e.daten && e.daten.groesse) teile.push(format_size(e.daten.groesse));
     if (e.daten && e.daten.uebersprungen) teile.push(e.daten.uebersprungen + ' ' + sag('uebersprungen'));
     d.appendChild(el('div', 'done-s', teile.join(' · ')));
     box.appendChild(d);
@@ -619,19 +622,19 @@ var scrinium = (function () {
   }
 
   // ── Aktionen ─────────────────────────────────────────────
-  function starten() {
-    var werkzeug = aktuellesWerkzeug();
-    if (!werkzeug) return;
+  function start_now() {
+    var tool = current_tool();
+    if (!tool) return;
     document.body.classList.add('laeuft');
-    API.werkzeug_starten(werkzeug.id).then(function (e) {
+    API.start_tool(tool.id).then(function (e) {
       document.body.classList.remove('laeuft');
-      ZUSTAND.ergebnis = e;
-      zeichneArbeit();
-      neuLaden();
+      STATE.result = e;
+      render_work();
+      reload();
     }).catch(function (err) {
       document.body.classList.remove('laeuft');
-      ZUSTAND.ergebnis = { text: String(err), aktionen: [], daten: {}, fehler: true };
-      zeichneArbeit();
+      STATE.result = { text: String(err), aktionen: [], daten: {}, fehler: true };
+      render_work();
     });
   }
 
@@ -639,61 +642,61 @@ var scrinium = (function () {
     // Undo und Co. laufen ueber eine eigene Python-Funktion; die kommt
     // aus den 'aktionen' des Werkzeugs und traegt ihre Kennung.
     if (!API['_aktion']) {
-      ZUSTAND.ergebnis = { text: sag('nichtVerbunden'), aktionen: [], daten: {}, fehler: true };
-      zeichneArbeit();
+      STATE.result = { text: sag('nichtVerbunden'), aktionen: [], daten: {}, fehler: true };
+      render_work();
       return;
     }
     API['_aktion'](a[1]).then(function (e) {
-      ZUSTAND.ergebnis = e;
-      zeichneArbeit();
+      STATE.result = e;
+      render_work();
     });
   }
 
-  function neuLaden() {
+  function reload() {
     if (!API) return;
-    API.zustand().then(function (z) {
-      zustand(z);
-      vorschauLaden();
+    API.state().then(function (z) {
+      apply_state(z);
+      load_preview();
     });
   }
 
-  function vorschauLaden() {
+  function load_preview() {
     // pywebview materialisiert Attribute erst beim Zugriff. Darum direkt
     // aufrufen und den Fehler abfangen - fehlt die Vorschau, zeigt die
     // Oberflaeche eben nur den Startknopf.
-    if (!API || !GEWAHLT) return;
+    if (!API || !SELECTED) return;
     try {
-      API.vorschau(GEWAHLT).then(function (v) {
-        ZUSTAND.vorschau = v;
-        zeichneArbeit();
+      API.preview(SELECTED).then(function (v) {
+        STATE.preview = v;
+        render_work();
       }).catch(function () {
-        ZUSTAND.vorschau = null;
+        STATE.preview = null;
       });
     } catch (e) {
-      ZUSTAND.vorschau = null;
+      STATE.preview = null;
     }
   }
 
-  function zustand(z) {
+  function apply_state(z) {
     if (!z) return;
-    ZUSTAND.werkzeuge = z.werkzeuge || [];
-    ZUSTAND.einstellungen = z.einstellungen || {};
+    STATE.tools = z.tools || [];
+    STATE.settings = z.settings || {};
 
-    if (!GEWAHLT && ZUSTAND.werkzeuge.length) {
-      for (var i = 0; i < ZUSTAND.werkzeuge.length; i++) {
-        if (ZUSTAND.werkzeuge[i].an) { GEWAHLT = ZUSTAND.werkzeuge[i].id; break; }
+    if (!SELECTED && STATE.tools.length) {
+      for (var i = 0; i < STATE.tools.length; i++) {
+        if (STATE.tools[i].an) { SELECTED = STATE.tools[i].id; break; }
       }
-      if (!GEWAHLT) GEWAHLT = ZUSTAND.werkzeuge[0].id;
+      if (!SELECTED) SELECTED = STATE.tools[0].id;
     }
 
-    T = TEXTE[sprache()] || TEXTE.de;
+    T = TEXTE[language()] || TEXTE.de;
     document.getElementById('sprache-text').textContent =
-      sprache() === 'en' ? T.deutsch : T.english;
+      language() === 'en' ? T.deutsch : T.english;
     document.getElementById('ordner-pfad').textContent =
-      (ZUSTAND.einstellungen.downloads_ordner || '—');
+      (STATE.settings.downloads_folder || '—');
 
-    zeichneWerkzeuge();
-    zeichneArbeit();
+    render_tools();
+    render_work();
   }
 
   // ── Start ────────────────────────────────────────────────
@@ -707,27 +710,28 @@ var scrinium = (function () {
         return;
       }
       document.getElementById('btn-ordner').onclick = function () {
-        api.ordner_waehlen().then(function () { neuLaden(); });
+        api.choose_folder().then(function () { reload(); });
       };
       document.getElementById('btn-oeffnen').onclick = function () {
-        if (api.ordner_oeffnen) api.ordner_oeffnen();
+        api.open_folder();
       };
       document.getElementById('btn-sprache').onclick = function () {
-        api.sprache_setzen(sprache() === 'de' ? 'en' : 'de').then(function (z) {
-          zustand(z);
+        api.set_language(language() === 'de' ? 'en' : 'de').then(function (z) {
+          apply_state(z);
         });
       };
       document.getElementById('btn-einstellungen').onclick = function () {
-        if (api.einstellungen_oeffnen) api.einstellungen_oeffnen();
+        api.open_settings();
       };
-      neuLaden();
+      reload();
     });
   }
 
   return {
-    zustand: zustand,
+    // Python ruft scrinium.state(...) auf - der Name muss passen.
+    state: apply_state,
     start: start,
-    gewaehlt: function () { return GEWAHLT; }
+    selected: function () { return SELECTED; }
   };
 })();
 

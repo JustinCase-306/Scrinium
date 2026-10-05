@@ -5,6 +5,13 @@ rem                  build.bat installer  -> also build Scrinium-Setup.exe
 setlocal
 cd /d "%~dp0"
 
+rem WICHTIG: PYTHONPATH/PYTHONHOME muessen leer sein.
+rem Steht global z.B. der Pfad eines Agenten im PATH, zieht PyInstaller
+rem deren cffi mit - und die fertige EXE startet dann mit
+rem "Version mismatch: cffi 2.0.0 ... 2.1.1" und nicht.
+set "PYTHONPATH="
+set "PYTHONHOME="
+
 rem Use the project venv when present, else whatever python is on PATH.
 set "PY=python"
 if exist ".venv\Scripts\python.exe" set "PY=.venv\Scripts\python.exe"

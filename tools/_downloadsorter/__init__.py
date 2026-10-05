@@ -1,7 +1,7 @@
-"""Downloads-Sortierer - das erste Scrinium-Werkzeug.
+"""Downloads-Sortierer - das erste Scrinium-Tool.
 
-Ein Werkzeug ist nicht mehr als diese Datei plus die Ordner daneben. Der
-Kern (`scrinium/kern.py`) laedt diese Datei und ruft `pruefe()` und
+Ein Tool ist nicht mehr als diese Datei plus die Ordner daneben. Der
+Kern (`scrinium/core.py`) laedt diese Datei und ruft `check()` und
 `starte()`. Er weiss nicht, dass es hier um Dateien und Ordner geht.
 
 Die eigentliche Sortier-Logik liegt nicht hier, sondern in
@@ -10,7 +10,7 @@ Schnittstelle zum Scrinium-Rahmen.
 
 Was `starte()` zurueckgibt, hat immer dieselbe Form:
 
-    {"text": "...", "aktionen": [...], "daten": {...}}
+    {"text": "...", "actions": [...], "data": {...}}
 """
 
 from __future__ import annotations
@@ -18,20 +18,20 @@ from __future__ import annotations
 import os
 import sys
 
-# Damit das Werkzeug seine eigene Dateien findet, egal von wo es gestartet
+# Damit das Tool seine eigene Dateien findet, egal von wo es gestartet
 # wurde - der Rahmen setzt das, aber hier noch einmal als Absicherung.
 _HIER = os.path.dirname(os.path.abspath(__file__))
 if _HIER not in sys.path:
     sys.path.insert(0, _HIER)
 
 from logik.regeln import (                    # noqa: E402
-    ordner_planen,
-    plan_anwenden,
-    einstellungen,
-    laeufe_liste,
-    letzter_lauf,
-    lauf_rueckgaengig,
-    Lauf,
+    plan_folder,
+    apply_plan,
+    settings,
+    list_runs,
+    last_run,
+    undo_run,
+    Run,
 )
 
 # Alles, was der Kern zum Finden braucht:
@@ -42,171 +42,171 @@ BETA = False
 # ---------------------------------------------------------------------------
 # Der Vertrag
 # ---------------------------------------------------------------------------
-def pruefe() -> tuple:
+def check() -> tuple:
     """Darf der Sortierer starten?
 
     Wird aufgerufen, BEVOR der Nutzer auf "Starten" klickt - auch beim
     Programmstart, um den Zustand anzuzeigen.
     """
-    ordner = einstellungen().downloads_ordner
-    if not ordner:
+    folder = settings().downloads_folder
+    if not folder:
         return False, spr("downloadsorter.kein_ordner")
-    if not os.path.isdir(ordner):
-        return False, spr("downloadsorter.ordner_fehlt", ordner=ordner)
+    if not os.path.isdir(folder):
+        return False, spr("downloadsorter.ordner_fehlt", folder=folder)
     return True, ""
 
 
 def starte() -> dict:
     """Sortiert einmal.
 
-    Keine Argumente - die Einstellungen kommen aus dem Werkzeug selbst. Das
-    ist Absicht: der Rahmen soll nicht bestimmen, WIE ein Werkzeug arbeitet.
+    Keine Argumente - die Settings kommen aus dem Tool selbst. Das
+    ist Absicht: der Rahmen soll nicht bestimmen, WIE ein Tool arbeitet.
     """
-    ok, grund = pruefe()
+    ok, grund = check()
     if not ok:
-        return {"text": grund, "aktionen": [], "daten": {}, "fehler": True}
+        return {"text": grund, "actions": [], "data": {}, "fehler": True}
 
-    ordner = einstellungen().downloads_ordner
-    plan = ordner_planen(ordner, einstellungen())
+    folder = settings().downloads_folder
+    plan = plan_folder(folder, settings())
     if not plan or not plan.dateien:
         return {
             "text": spr("downloadsorter.keine_dateien"),
-            "aktionen": [],
-            "daten": {"uebersprungen": len(plan.uebersprungen) if plan else 0},
+            "actions": [],
+            "data": {"skipped": len(plan.skipped) if plan else 0},
         }
 
-    lauf = plan_anwenden(plan)
+    lauf = apply_plan(plan)
     if lauf.fehler:
         return {
             "text": spr("fehler.allgemein", grund=lauf.fehler),
-            "aktionen": [], "daten": {}, "fehler": True,
+            "actions": [], "data": {}, "fehler": True,
         }
 
     # Was zurueckkommt, kann der Rahmen ohne Vorwissen anzeigen.
-    text = spr("downloadsorter.fertig", anzahl=len(lauf.verschoben))
+    text = spr("downloadsorter.fertig", anzahl=len(lauf.moved))
 
-    aktionen = []
+    actions = []
     if lauf.run_id:
-        aktionen.append((spr("downloadsorter.rueckgaengig"), lauf.run_id))
+        actions.append((spr("downloadsorter.rueckgaengig"), lauf.run_id))
 
     return {
         "text": text,
-        "aktionen": aktionen,
-        "daten": {
-            "verschoben": len(lauf.verschoben),
-            "uebersprungen": len(plan.uebersprungen),
-            "ordner": ordner,
+        "actions": actions,
+        "data": {
+            "moved": len(lauf.moved),
+            "skipped": len(plan.skipped),
+            "folder": folder,
             "run_id": lauf.run_id,
         },
     }
 
 
-def vorschau() -> dict:
+def preview() -> dict:
     """Was wuerde passieren? Bewegt nichts.
 
     Die Oberflaeche zeigt das als Liste an, bevor der Nutzer auf
     "Jetzt sortieren" klickt. Das ist derselbe Plan wie in `starte()` -
     nur eben nicht ausgefuehrt.
     """
-    ok, grund = pruefe()
+    ok, grund = check()
     if not ok:
         return {"dateien": [], "geprueft": 0, "fehler": grund}
 
-    plan = ordner_planen(einstellungen().downloads_ordner, einstellungen())
+    plan = plan_folder(settings().downloads_folder, settings())
     if not plan:
         return {"dateien": [], "geprueft": 0}
 
     dateien = []
-    for pfad in plan.dateien:
-        name = os.path.basename(pfad.quelle)
+    for path in plan.dateien:
+        name = os.path.basename(path.quelle)
         ziel_ordner = ""
         try:
-            ziel_ordner = os.path.basename(os.path.dirname(pfad.ziel))
+            ziel_ordner = os.path.basename(os.path.dirname(path.ziel))
         except OSError:
             pass
         dateien.append({
             "name": name,
             "ziel": ziel_ordner,
             "grund": "",
-            "groesse": pfad.groesse,
+            "size": path.size,
         })
 
     # Was liegen bleibt, gehoert auch in die Vorschau - sonst denkt der
     # Nutzer, die Datei sei verschwunden.
-    for name, grund in plan.uebersprungen:
+    for name, grund in plan.skipped:
         if name.startswith("("):
             continue
         dateien.append({
-            "name": name, "ziel": "", "grund": grund, "groesse": 0,
+            "name": name, "ziel": "", "grund": grund, "size": 0,
         })
 
     return {"dateien": dateien, "geprueft": len(dateien),
-            "verschoben": len(plan.dateien),
-            "uebersprungen": len(plan.uebersprungen)}
+            "moved": len(plan.dateien),
+            "skipped": len(plan.skipped)}
 
 
-def aktion_ausfuehren(kennung: str) -> dict:
+def run_action(kennung: str) -> dict:
     """Fuehrt eine zuvor angebotene Aktion aus.
 
-    Der Rahmen schickt nur die Kennung zurueck, die das Werkzeug selbst
+    Der Rahmen schickt nur die Kennung zurueck, die das Tool selbst
     vergeben hat - er weiss nicht, was "Rueckgaengig" bedeutet. Eine
     unbekannte Kennung ist ein Fehler, kein stiller Erfolg.
     """
-    lauf = letzter_lauf()
+    lauf = last_run()
     if lauf is None or lauf.run_id != kennung:
-        return {"text": "Dieser Lauf laesst sich nicht mehr rueckgaengig machen.",
-                "aktionen": [], "daten": {}, "fehler": True}
+        return {"text": "Dieser Run laesst sich nicht mehr rueckgaengig machen.",
+                "actions": [], "data": {}, "fehler": True}
 
-    anzahl, fehler = lauf_rueckgaengig(kennung)
+    anzahl, fehler = undo_run(kennung)
     return {
         "text": spr("downloadsorter.zurueck_fertig", anzahl=anzahl),
-        "aktionen": [],
-        "daten": {"zurueck": anzahl, "fehler": fehler},
+        "actions": [],
+        "data": {"restored": anzahl, "errors": fehler},
     }
 
 
-def spr(schluessel: str, **platzhalter) -> str:
+def spr(key: str, **platzhalter) -> str:
     """Ein Text in der eingestellten Sprache.
 
-    Der Weg laeuft ueber den Kern - aber nur, wenn es einer ist. Sonst
-    nehmen wir Deutsch, damit das Werkzeug auch einzeln lauffaehig ist.
+    Der Weg running ueber den Kern - aber nur, wenn es einer ist. Sonst
+    nehmen wir Deutsch, damit das Tool auch einzeln lauffaehig ist.
     """
     try:
-        from scrinium import texte
-        return texte.sag(schluessel, **platzhalter)
+        from scrinium import texts
+        return texts.sag(key, **platzhalter)
     except Exception:
-        return f'<{schluessel}>'   # ohne Rahmen: Schluessel zeigen
+        return f'<{key}>'   # ohne Rahmen: Schluessel zeigen
 
 
 # ---------------------------------------------------------------------------
-# Was das Werkzeug sonst noch kann (der Rahmen ruft nichts davon automatisch)
+# Was das Tool sonst noch kann (der Rahmen ruft nichts davon automatisch)
 # ---------------------------------------------------------------------------
 def verlauf(anzahl: int = 20) -> list:
     """Die letzten Laeufe, fuer eine Verlaufs-Ansicht."""
-    return laeufe_liste(anzahl)
+    return list_runs(anzahl)
 
 
-def letzte_aktion() -> Lauf | None:
-    """Der letzte Lauf, fuer einen Undo-Knopf."""
-    return letzter_lauf()
+def last_action() -> Run | None:
+    """Der letzte Run, fuer einen Undo-Knopf."""
+    return last_run()
 
 
-def rueckgaengig(run_id: str) -> dict:
-    """Macht einen Lauf rueckgaengig - gleiches Format wie `starte()`."""
-    anzahl, fehler = lauf_rueckgaengig(run_id)
+def undo(run_id: str) -> dict:
+    """Macht einen Run undo - gleiches Format wie `starte()`."""
+    anzahl, fehler = undo_run(run_id)
     return {
         "text": spr("downloadsorter.zurueck_fertig", anzahl=anzahl),
-        "aktionen": [],
-        "daten": {"zurueck": anzahl, "fehler": fehler},
+        "actions": [],
+        "data": {"restored": anzahl, "errors": fehler},
     }
 
 
 if __name__ == "__main__":
-    # So laesst sich das Werkzeug auch einzeln aufrufen:
+    # So laesst sich das Tool auch einzeln aufrufen:
     #     python tools\_downloadsorter\__init__.py
     import json
 
-    ok, grund = pruefe()
-    ergebnis = starte() if ok else {"text": grund, "aktionen": [], "daten": {}}
-    print(json.dumps({"ok": ok, "grund": grund, "ergebnis": ergebnis},
+    ok, grund = check()
+    result = starte() if ok else {"text": grund, "actions": [], "data": {}}
+    print(json.dumps({"ok": ok, "grund": grund, "result": result},
                      indent=2, ensure_ascii=False))

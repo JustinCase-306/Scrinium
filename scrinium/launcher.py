@@ -1,6 +1,6 @@
 """Scrinium-Einstieg.
 
-Aufruf ohne Argumente oeffnet das Fenster. Mit Argumenten laeuft die
+Aufruf ohne Argumente oeffnet das Fenster. Mit Argumenten running die
 Kommandozeile (`--sortieren`, `--undo`, `--pruefen` usw.) - so bleibt
 alles auch ohne Fenster bedienbar.
 """
@@ -16,7 +16,7 @@ def main() -> int:
 
         return run_cli(sys.argv[1:])
 
-    from scrinium.fenster import starten
+    from scrinium.window import starten
 
     return starten()
 

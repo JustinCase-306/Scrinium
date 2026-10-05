@@ -1,25 +1,25 @@
-"""Scrinium-Kern: findet Werkzeuge und startet sie.
+"""Scrinium-Kern: findet Tools und startet sie.
 
-Der Kern weiss NICHT, welche Werkzeuge es gibt. Er geht einfach durch
+Der Kern weiss NICHT, welche Tools es gibt. Er geht einfach durch
 `tools/` und schaut, was er findet. Ein neuer Ordner mit den richtigen
 Dateien reicht - es muss kein Code geaendert werden.
 
-Ein Werkzeug ist ein Ordner mit mindestens einer Datei `__init__.py`, die
+Ein Tool ist ein Ordner mit mindestens einer Datei `__init__.py`, die
 diese drei Dinge anbietet:
 
     NAME  = "Downloads-Sortierer"     # Anzeigename
-    def pruefe() -> tuple[bool, str]  # Darf ich starten?
+    def check() -> tuple[bool, str]  # Darf ich starten?
     def starte() -> dict              # Was ich tue
 
 Was `starte()` zurueckgibt, ist immer gleich aufgebaut:
 
     {
         "text":     "14 Dateien einsortiert",        # eine Zeile fuer die Anzeige
-        "aktionen": [("Rueckgaengig", run_id)],       # was der Nutzer tun kann
-        "daten":    {...},                           # Details, falls die UI sie will
+        "actions": [("Rueckgaengig", run_id)],       # was der Nutzer tun kann
+        "data":    {...},                           # Details, falls die UI sie will
     }
 
-Der Kern muss das nicht verstehen - er zeigt `text` an und bietet `aktionen`
+Der Kern muss das nicht verstehen - er zeigt `text` an und bietet `actions`
 als Schaltflaechen an. Das ist der ganze Vertrag.
 """
 
@@ -32,78 +32,78 @@ import traceback
 from dataclasses import dataclass, field
 from typing import Any
 
-# Nur die drei Dateinamen, die ein Werkzeug wirklich braucht.
+# Nur die drei Dateinamen, die ein Tool wirklich braucht.
 # Alles andere in der Tools-Liste wird ignoriert, damit man keine
-# .txt-Dateien oder __pycache__ als Werkzeug sieht.
+# .txt-Dateien oder __pycache__ als Tool sieht.
 ERFORDERLICH = ("__init__.py",)
 
 
 # ---------------------------------------------------------------------------
 # Wo liegen die Programmeile?
 # ---------------------------------------------------------------------------
-def basis_verzeichnis() -> str:
+def base_dir() -> str:
     """Der Ordner, in dem Scrinium liegt.
 
     Relativ zum Programm, nicht zum Arbeitsordner. Damit Scrinium aus
-    `C:\\Programme\\Scrinium` genauso laeuft wie aus `D:\\Dokumente\\Scrinium`.
+    `C:\\Programme\\Scrinium` genauso running wie aus `D:\\Dokumente\\Scrinium`.
     """
     if getattr(sys, "frozen", False):
         return os.path.dirname(sys.executable)
-    # dev: .../Scrinium/scrinium/kern.py  ->  .../Scrinium
+    # dev: .../Scrinium/scrinium/core.py  ->  .../Scrinium
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def tools_verzeichnis() -> str:
+def tools_dir() -> str:
     """Der Ordner mit den Werkzeugen."""
-    pfad = os.path.join(basis_verzeichnis(), "tools")
-    os.makedirs(pfad, exist_ok=True)
-    return pfad
+    path = os.path.join(base_dir(), "tools")
+    os.makedirs(path, exist_ok=True)
+    return path
 
 
 # ---------------------------------------------------------------------------
-# Ein Werkzeug
+# Ein Tool
 # ---------------------------------------------------------------------------
 @dataclass
-class Werkzeug:
-    """Ein geladenes Werkzeug aus `tools/`."""
+class Tool:
+    """Ein geladenes Tool aus `tools/`."""
 
-    ordner: str            # vollstaendiger Pfad zum Ordner
+    folder: str            # vollstaendiger Pfad zum Ordner
     name: str              # der Name, den es selbst nennt
     modul: Any = None      # das geladene Python-Modul
     beta: bool = False     # True = noch nicht fertig
     fehler: str = ""       # wenn beim Laden etwas kaputt ging
 
     @property
-    def pfad(self) -> str:
-        """Eigener Codepfad - damit das Werkzeug weitere Datei(en) laden kann."""
-        if self.ordner not in sys.path:
-            sys.path.insert(0, self.ordner)
-        return self.ordner
+    def path(self) -> str:
+        """Eigener Codepfad - damit das Tool weitere Datei(en) laden kann."""
+        if self.folder not in sys.path:
+            sys.path.insert(0, self.folder)
+        return self.folder
 
     @property
     def id(self) -> str:
-        """Kurzer, stabiler Name fuer Einstellungen."""
-        return os.path.basename(self.ordner).lstrip("_")
+        """Kurzer, stabiler Name fuer Settings."""
+        return os.path.basename(self.folder).lstrip("_")
 
-    def pruefe(self) -> tuple[bool, str]:
-        """Darf ich starten? Das Werkzeug darf das selbst entscheiden."""
+    def check(self) -> tuple[bool, str]:
+        """Darf ich starten? Das Tool darf das selbst entscheiden."""
         if self.fehler:
             return False, self.fehler
-        pruef = getattr(self.modul, "pruefe", None)
+        pruef = getattr(self.modul, "check", None)
         if not callable(pruef):
             return True, ""                       # kein Test = alles gut
         try:
-            ergebnis = pruef()
+            result = pruef()
         except Exception:
-            return False, "pruefe() ist abgestuerzt"
-        if isinstance(ergebnis, tuple) and len(ergebnis) == 2:
-            return bool(ergebnis[0]), str(ergebnis[1])
-        return bool(ergebnis), ""
+            return False, "check() ist abgestuerzt"
+        if isinstance(result, tuple) and len(result) == 2:
+            return bool(result[0]), str(result[1])
+        return bool(result), ""
 
     def starte(self) -> dict:
-        """Fuehrt das Werkzeug aus und gibt das Standardergebnis zurueck.
+        """Fuehrt das Tool aus und gibt das Standardergebnis zurueck.
 
-        Ein Werkzeug, das kaputt geht, wird NICHT stillschweigend zu
+        Ein Tool, das kaputt geht, wird NICHT stillschweigend zu
         `{}`. Es kommt ein sichtbarer Fehler zurueck.
         """
         if self.fehler:
@@ -117,7 +117,7 @@ class Werkzeug:
         try:
             roh = starte()
         except Exception:
-            # Werkzeug ist defekt - sag es, statt still zu scheitern
+            # Tool ist defekt - sag es, statt still zu scheitern
             self.fehler = traceback.format_exc(limit=2).strip().splitlines()[-1]
             return _ergebnis(f"'{self.name}' ist abgestuerzt: {self.fehler}",
                              fehler=True)
@@ -131,29 +131,29 @@ class Werkzeug:
 # ---------------------------------------------------------------------------
 # Ergebnisse standardisieren
 # ---------------------------------------------------------------------------
-def _ergebnis(text: str, aktionen=None, daten=None, fehler: bool = False) -> dict:
-    return {"text": text, "aktionen": list(aktionen or []),
-            "daten": dict(daten or {}), "fehler": fehler}
+def _ergebnis(text: str, actions=None, data=None, fehler: bool = False) -> dict:
+    return {"text": text, "actions": list(actions or []),
+            "data": dict(data or {}), "fehler": fehler}
 
 
 def _normalisiere(roh: dict) -> dict:
-    """Macht aus allem, was ein Werkzeug zurueckgibt, dieselbe Form.
+    """Macht aus allem, was ein Tool zurueckgibt, dieselbe Form.
 
-    Ein Werkzeug darf auch nur `{"text": "fertig"}` zurueckgeben - der Rest
+    Ein Tool darf auch nur `{"text": "fertig"}` zurueckgeben - der Rest
     wird ergaenzt. Fehlt `text`, ist das ein Fehler: ohne Text kann die
     Oberflaeche nichts anzeigen.
     """
     text = roh.get("text")
     if not isinstance(text, str) or not text.strip():
-        return _ergebnis("Werkzeug hat keinen Text zurueckgegeben.", fehler=True)
+        return _ergebnis("Tool hat keinen Text zurueckgegeben.", fehler=True)
 
-    aktionen = roh.get("aktionen") or []
-    if not isinstance(aktionen, (list, tuple)):
-        aktionen = []
+    actions = roh.get("actions") or []
+    if not isinstance(actions, (list, tuple)):
+        actions = []
 
     # Jede Aktion: (Beschriftung, Kennung). Sonst nicht anzeigen.
     saubere_aktionen = []
-    for a in aktionen:
+    for a in actions:
         if isinstance(a, (str, bytes)):
             continue                      # "Text" ist keine Aktion
         try:
@@ -162,20 +162,20 @@ def _normalisiere(roh: dict) -> dict:
             continue
         saubere_aktionen.append((str(beschriftung), kennung))
 
-    daten = roh.get("daten")
+    data = roh.get("data")
     return _ergebnis(text, saubere_aktionen,
-                     daten if isinstance(daten, dict) else {},
+                     data if isinstance(data, dict) else {},
                      bool(roh.get("fehler")))
 
 
 # ---------------------------------------------------------------------------
-# Werkzeuge finden und laden
+# Tools finden und laden
 # ---------------------------------------------------------------------------
-def _lade(ordner: str) -> Werkzeug:
-    """Laedt ein Werkzeug aus einem Ordner."""
-    init = os.path.join(ordner, "__init__.py")
-    wc = Werkzeug(ordner=os.path.basename(ordner), name=os.path.basename(ordner))
-    wc.ordner = ordner
+def _lade(folder: str) -> Tool:
+    """Laedt ein Tool aus einem Ordner."""
+    init = os.path.join(folder, "__init__.py")
+    wc = Tool(folder=os.path.basename(folder), name=os.path.basename(folder))
+    wc.folder = folder
 
     try:
         spec = importlib.util.spec_from_file_location(
@@ -195,14 +195,14 @@ def _lade(ordner: str) -> Werkzeug:
     return wc
 
 
-def finde_werkzeuge(ordner: str | None = None) -> list[Werkzeug]:
-    """Alle Werkzeuge in `tools/` - ohne sie zu kennen.
+def find_tools(folder: str | None = None) -> list[Tool]:
+    """Alle Tools in `tools/` - ohne sie zu kennen.
 
-    Regel: ein Ordner ist ein Werkzeug, wenn er eine `__init__.py` hat.
+    Regel: ein Ordner ist ein Tool, wenn er eine `__init__.py` hat.
     Alles andere wird ignoriert (auch __pycache__ und Textdateien).
     """
-    basis = ordner or tools_verzeichnis()
-    gefunden: list[Werkzeug] = []
+    basis = folder or tools_dir()
+    gefunden: list[Tool] = []
 
     try:
         eintraege = sorted(os.listdir(basis))
@@ -210,29 +210,29 @@ def finde_werkzeuge(ordner: str | None = None) -> list[Werkzeug]:
         return gefunden
 
     for eintrag in eintraege:
-        pfad = os.path.join(basis, eintrag)
-        if not os.path.isdir(pfad):
+        path = os.path.join(basis, eintrag)
+        if not os.path.isdir(path):
             continue
         if eintrag.startswith((".", "__")):
             continue                       # __pycache__, .git usw.
-        if not os.path.isfile(os.path.join(pfad, ERFORDERLICH[0])):
+        if not os.path.isfile(os.path.join(path, ERFORDERLICH[0])):
             continue
-        gefunden.append(_lade(pfad))
+        gefunden.append(_lade(path))
 
     gefunden.sort(key=lambda w: w.name.lower())
     return gefunden
 
 
-def werkzeug_namen() -> list[str]:
+def tool_names() -> list[str]:
     """Nur die Anzeigenamen - fuer Auswahlfelder usw."""
-    return [w.name for w in finde_werkzeuge()]
+    return [w.name for w in find_tools()]
 
 
 if __name__ == "__main__":
     # Kurztest: zeigt, was gefunden wurde
-    print(f"Werkzeuge in {tools_verzeichnis()}:")
-    for w in finde_werkzeuge():
-        zustand = "bereit" if w.pruefe()[0] else f"blockiert: {w.pruefe()[1]}"
-        print(f"  {'[beta]' if w.beta else '      '} {w.name:<26} {zustand}")
-    if not finde_werkzeuge():
+    print(f"Tools in {tools_dir()}:")
+    for w in find_tools():
+        state = "bereit" if w.check()[0] else f"blockiert: {w.check()[1]}"
+        print(f"  {'[beta]' if w.beta else '      '} {w.name:<26} {state}")
+    if not find_tools():
         print("  (keine)")

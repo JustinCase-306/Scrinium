@@ -249,7 +249,7 @@ def plan(
             )
             continue
         if cls.skip or cls.category is None:
-            reason = cls.reason or "keine Kategorie"
+            reason = cls.reason or "keine Category"
             result.skipped.append(
                 SkippedItem(name, reason, _safe_size(path), "", cls.category)
             )

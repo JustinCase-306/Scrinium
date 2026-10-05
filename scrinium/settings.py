@@ -1,9 +1,9 @@
-"""Scrinium-Einstellungen.
+"""Scrinium-Settings.
 
 Zwei Sorten Dinge, die man trennen muss:
 
 1.  **Was der Nutzer eingestellt hat** (welcher Download-Ordner, welche
-    Sprache, welche Werkzeuge sind an) -> `config.json`
+    Sprache, welche Tools sind an) -> `config.json`
 2.  **Wo Scrinium liegt** -> wird nie gespeichert, sondern jedes Mal neu
     aus dem Programmordner berechnet
 
@@ -13,7 +13,7 @@ funktionieren.
 
 Die config.json liegt in `%APPDATA%\\Scrinium\\`, weil man in
 `C:\\Programme\\` nicht schreiben darf. Das Programm ist umziehbar, die
-Einstellungen bleiben.
+Settings bleiben.
 """
 
 from __future__ import annotations
@@ -23,64 +23,64 @@ import os
 import tempfile
 from dataclasses import dataclass, field, asdict
 
-from .kern import basis_verzeichnis
+from .core import base_dir
 
 CONFIG_NAME = "config.json"
 
 
-def config_ordner() -> str:
-    """Wo die Einstellungen liegen - nie im Programmordner."""
+def config_dir() -> str:
+    """Wo die Settings liegen - nie im Programmordner."""
     basis = os.environ.get("APPDATA") or os.path.expanduser("~")
-    ordner = os.path.join(basis, "Scrinium")
-    os.makedirs(ordner, exist_ok=True)
-    return ordner
+    folder = os.path.join(basis, "Scrinium")
+    os.makedirs(folder, exist_ok=True)
+    return folder
 
 
-def config_pfad() -> str:
-    return os.path.join(config_ordner(), CONFIG_NAME)
+def config_path() -> str:
+    return os.path.join(config_dir(), CONFIG_NAME)
 
 
 # ---------------------------------------------------------------------------
 # Standardwerte
 # ---------------------------------------------------------------------------
 @dataclass
-class Einstellungen:
+class Settings:
     """Alles, was man einstellen kann."""
 
-    sprache: str = "de"
+    language: str = "de"
 
-    # Werkzeuge: welche sind an? Key ist die Werkzeug-id (z.B. "downloadsorter")
-    werkzeuge_an: dict = field(default_factory=dict)
+    # Tools: welche sind an? Key ist die Tool-id (z.B. "downloadsorter")
+    tools_enabled: dict = field(default_factory=dict)
 
     # Was der Downloadsorter braucht (darf er selbst fuehren)
-    downloads_ordner: str = ""
-    downloads_minute: int = 30
-    downloads_bei_neuen_dateien: bool = True
+    downloads_folder: str = ""
+    downloads_interval: int = 30
+    downloads_on_new_files: bool = True
     downloads_min_age: int = 30
 
     @classmethod
-    def standard(cls) -> "Einstellungen":
+    def standard(cls) -> "Settings":
         """Standardwerte inkl. Default-Download-Ordner."""
         e = cls()
-        e.downloads_ordner = _standard_downloads()
+        e.downloads_folder = _standard_downloads()
         return e
 
-    def werkzeug_ist_an(self, wid: str) -> bool:
+    def tool_is_enabled(self, wid: str) -> bool:
         """Standard: an. Man muss nur ausschalten, was man nicht will."""
-        return bool(self.werkzeuge_an.get(wid, True))
+        return bool(self.tools_enabled.get(wid, True))
 
-    def werkzeug_schalten(self, wid: str, an: bool) -> None:
-        self.werkzeuge_an[wid] = an
+    def toggle_tool(self, wid: str, an: bool) -> None:
+        self.tools_enabled[wid] = an
 
     # -----------------------------------------------------------------
     def speichern(self) -> str:
-        """Schreibt die Einstellungen - aber nie halb."""
-        daten = asdict(self)
-        text = json.dumps(daten, indent=2, ensure_ascii=False) + "\n"
+        """Schreibt die Settings - aber nie halb."""
+        data = asdict(self)
+        text = json.dumps(data, indent=2, ensure_ascii=False) + "\n"
 
         # Erst in eine Tempdatei, dann umbenennen. Sonst kann ein Stromausfall
         # mitten im Schreiben die ganze config.json zerstoeren.
-        ziel = config_pfad()
+        ziel = config_path()
         fd, tmp = tempfile.mkstemp(prefix=".scrinium_", dir=os.path.dirname(ziel))
         try:
             with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as fh:
@@ -95,21 +95,21 @@ class Einstellungen:
         return ziel
 
     @classmethod
-    def laden(cls) -> "Einstellungen":
-        """Liest die Einstellungen. Fehler sind nie fatal."""
+    def laden(cls) -> "Settings":
+        """Liest die Settings. Fehler sind nie fatal."""
         standard = cls.standard()
         try:
-            with open(config_pfad(), "r", encoding="utf-8") as fh:
-                daten = json.load(fh)
+            with open(config_path(), "r", encoding="utf-8") as fh:
+                data = json.load(fh)
         except (OSError, ValueError):
             return standard
 
-        if not isinstance(daten, dict):
+        if not isinstance(data, dict):
             return standard
 
         for feld_name in standard.__dataclass_fields__:
-            if feld_name in daten:
-                wert = daten[feld_name]
+            if feld_name in data:
+                wert = data[feld_name]
                 aktuell = getattr(standard, feld_name)
                 # Typ pruefen: bool ist ein specialer int in Python
                 if isinstance(aktuell, bool):
@@ -139,10 +139,10 @@ def _standard_downloads() -> str:
     try:
         import winreg
 
-        schluessel = (r"SOFTWARE\\Microsoft\\Windows\\CurrentVersion"
+        key = (r"SOFTWARE\\Microsoft\\Windows\\CurrentVersion"
                       r"\\Explorer\\Shell Folders")
         downloads_id = "{374DE290-123F-4565-9164-39C4925E467B}"
-        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, schluessel) as k:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key) as k:
             wert, _ = winreg.QueryValueEx(k, downloads_id)
             if wert and os.path.isdir(wert):
                 return wert.replace("\\", "/")

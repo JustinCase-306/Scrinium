@@ -41,19 +41,19 @@ for i in range(40):
 open(os.path.join(d, "laden.mp4.crdownload"), "wb").write(b"x" * 512)
 print("40 Dateien + 1 laufender Download angelegt")
 
-from scrinium.einstellungen import Einstellungen  # noqa: E402
+from scrinium.settings import Settings  # noqa: E402
 
-cfg = Einstellungen.standard()
-cfg.downloads_ordner = d.replace("\\", "/")
+cfg = Settings.standard()
+cfg.downloads_folder = d.replace("\\", "/")
 cfg.downloads_min_age = 0
 cfg.speichern()
 print("Testordner:", d)
 
 import webview  # noqa: E402
-from scrinium import bruecke  # noqa: E402
-from scrinium import fenster as fenster_mod  # noqa: E402
+from scrinium import bridge  # noqa: E402
+from scrinium import window as window_mod  # noqa: E402
 
-html = os.path.join(ROOT, "scrinium", "fenster.html")
+html = os.path.join(ROOT, "scrinium", "window.html")
 
 # Das JavaScript, das den DOM liest. Ergebnis geht nach window.befund,
 # damit es von aussen abrufbar ist.
@@ -116,10 +116,10 @@ JS_LESEN = """
 befund = {}
 fenster_obj = webview.create_window(
     "Scrinium", html,
-    js_api=fenster_mod.bruecke_api(),
+    js_api=window_mod.bridge_api(),
     width=1280, height=820, min_size=(900, 620),
     background_color="#141218")
-bruecke.fenster_setzen(fenster_obj)
+bridge.set_window(fenster_obj)
 
 
 def auslesen():
