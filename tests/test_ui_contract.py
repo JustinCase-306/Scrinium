@@ -381,12 +381,19 @@ def test_every_settings_label_exists_and_is_delivered():
     """
     from scrinium import bridge, texts
 
+    # `all_keys()` liest die geladenen Texte - ohne geladene Sprache ist
+    # die Liste leer. Deshalb hier ausdruecklich laden, sonst haengt das
+    # Ergebnis davon ab, ob ein anderer Test vorher set_language gerufen
+    # hat. Ein Test, der nur in Gesellschaft laeuft, ist wertlos.
+    texts.set_language("de")
+
     js = js_teil("settings.html")
     gefordert = sorted(set(re.findall(
         r"sag[st]?\(['\"]((?:einstellungen|fenster)\.[\w.]+)", js)))
     assert gefordert, "keine Textschluessel in settings.html gefunden"
 
     alle = set(texts.all_keys())
+    assert alle, "all_keys() ist leer - Sprache nicht geladen?"
     fehlend = [k for k in gefordert if k not in alle]
     assert not fehlend, (
         f"diese Schluessel fehlen in den Sprachdateien und erscheinen im "
