@@ -317,6 +317,57 @@ def test_open_settings_says_so_when_the_file_is_missing(monkeypatch, capsys):
     assert "settings.html" in capsys.readouterr().out
 
 
+# --------------------------------------------------------------------------
+# 5. Der Start-Wettlauf mit pywebview
+# --------------------------------------------------------------------------
+def test_bereit_waits_for_a_method_not_just_the_object():
+    """Regression: "API.state is not a function" in der gepackten EXE.
+
+    pywebview setzt `window.pywebview.api` in ZWEI Schritten: erst ein
+    leeres Objekt, dann - in einem eigenen Thread - die Methoden. Wer
+    nur auf das Objekt wartet, erwischt den leeren Zwischenstand.
+
+    Aus der Quelle gewann man den Wettlauf zufaellig, in der EXE nie.
+    Deshalb muss auf eine bekannte Methode geprueft werden.
+    """
+    js = js_teil("window.html")
+    i = js.find("function bereit()")
+    assert i > 0, "bereit() nicht gefunden"
+    block = js[i:i + 900]
+
+    assert "typeof window.pywebview.api.state === 'function'" in block, (
+        "bereit() prueft nicht, ob eine Methode schon da ist - dann kann "
+        "es den leeren Zwischenstand erwischen")
+    assert "function fertig()" in block, "die Pruefung fehlt"
+
+
+def test_no_pseudo_element_uses_the_icon_font():
+    """Ein Icon-Zeichen in ::after wird als TEXT sichtbar.
+
+    `content: 'expand_more'` mit der Icon-Schrift zeigte im Fenster das
+    Wort "more" ueber "Deutsch" - die Schrift greift in einem
+    Pseudo-Element nicht.
+    """
+    html = lies("scrinium", "window.html")
+    css = html[html.find("<style>"):html.find("</style>")]
+    for m in re.finditer(r"::(?:after|before)\s*\{([^}]*)\}", css):
+        rumpf = m.group(1)
+        assert "Material Symbols" not in rumpf, (
+            "Icon-Schrift in einem Pseudo-Element - das wird als Text "
+            f"sichtbar: {rumpf.strip()[:80]}")
+
+
+def test_language_field_has_a_visible_arrow():
+    """Das Auswahlfeld muss einen Pfeil haben, sonst sieht es wie Text aus."""
+    html = lies("scrinium", "window.html")
+    css = html[html.find("<style>"):html.find("</style>")]
+    assert ".wahl-wrap::after" in css
+    block = css[css.find(".wahl-wrap::after"):]
+    block = block[:block.find("}")]
+    assert "border-top" in block, (
+        "der Pfeil ist kein Dreieck - dann braucht er eine Schrift")
+
+
 def test_tools_dir_finds_the_bundled_sorter():
     """Im Quellcode muss das mitgelieferte Werkzeug gefunden werden."""
     from scrinium import core
