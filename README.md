@@ -178,9 +178,9 @@ Project-specific rules live in `.hermes.md`.
 
 ## Credits
 
-* **Logic & code:** [@JustinCase-306](https://github.com/JustinCase-306)
-* **Original v1 GUI:** DeepSeek v4
-* **v2 interface:** pywebview + WebView2, HTML/CSS, Material Design
+* **Original version + leading and idea:** [@JustinCase-306](https://github.com/JustinCase-306)
+* **Deeper logic and GUI:** DeepSeek v4
+* **v2 interface:** pywebview + WebView2, HTML/CSS, Material Design (thanks to [@Google](https://github.com/google))
 
 ## License
 
